@@ -1,6 +1,7 @@
-import { defineNuxtModule, addPlugin, createResolver, useLogger } from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, createResolver, useLogger, addServerImportsDir, addTemplate } from '@nuxt/kit'
 import type { RedisOptions } from 'bullmq'
 import defu from 'defu'
+import { globby } from 'globby'
 import { name, version, configKey, compatibility } from '../package.json'
 
 // Module options TypeScript interface definition
@@ -23,7 +24,7 @@ export default defineNuxtModule<ModuleOptions>({
     queues: 'server/queues/**/*',
     redis: { host: '127.0.0.1', port: 6379 },
   },
-  setup(options, nuxt) {
+  async setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
     const logger = useLogger(name)
 
@@ -34,5 +35,7 @@ export default defineNuxtModule<ModuleOptions>({
       nuxt.options.runtimeConfig.workers,
       options,
     )
+
+    addServerImportsDir(resolve('./runtime/server/utils'))
   },
 })
