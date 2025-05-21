@@ -5,6 +5,10 @@
   "repository": "your-org/my-module",
   "license": "MIT",
   "type": "module",
+  "configKey": "workers",
+  "compatibility": {
+    "nuxt": "^2.9.0 || ^3.0.0-rc.1"
+  },
   "exports": {
     ".": {
       "types": "./dist/types.d.mts",
@@ -34,12 +38,14 @@
     "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit"
   },
   "dependencies": {
-    "@nuxt/kit": "^3.17.4"
+    "bullmq": "^5.53.0",
+    "ioredis": "^5.6.1"
   },
   "devDependencies": {
     "@nuxt/devtools": "^2.4.1",
     "@nuxt/eslint": "^1.4.1",
     "@nuxt/eslint-config": "^1.4.0",
+    "@nuxt/kit": "^3.17.4",
     "@nuxt/module-builder": "^1.0.1",
     "@nuxt/schema": "^3.17.4",
     "@nuxt/test-utils": "^3.19.0",
