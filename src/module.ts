@@ -1,8 +1,10 @@
-import { join, relative } from 'node:path'
+import { join } from 'node:path'
 import fs from 'node:fs/promises'
-import { defineNuxtModule, addPlugin, createResolver, useLogger, addServerImportsDir } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, useLogger, addServerImportsDir } from '@nuxt/kit'
 import defu from 'defu'
 import { globby } from 'globby'
+import type { InlineConfig } from 'vite'
+import { build as viteBuild } from 'vite'
 import type { RedisOptions } from 'bullmq'
 import { name, version, configKey, compatibility } from '../package.json'
 
@@ -13,22 +15,15 @@ export interface ModuleOptions {
 }
 
 export default defineNuxtModule<ModuleOptions>({
-  meta: {
-    name,
-    configKey,
-    version,
-    compatibility,
-  },
+  meta: { name, configKey, version, compatibility },
   defaults: {
-    workers: 'server/workers/**/*',
-    queues: 'server/queues/**/*',
+    workers: 'server/workers/**/*.{ts,js}',
+    queues: 'server/queues/**/*.{ts,js}',
     redis: { host: '127.0.0.1', port: 6379 },
   },
   async setup(options, nuxt) {
-    const { resolve } = createResolver(import.meta.url)
     const logger = useLogger(name)
-
-    addPlugin(resolve('./runtime/plugin'))
+    const { resolve } = createResolver(import.meta.url)
 
     nuxt.options.runtimeConfig.workers = defu(
       nuxt.options.runtimeConfig.workers,
@@ -37,30 +32,62 @@ export default defineNuxtModule<ModuleOptions>({
 
     addServerImportsDir(resolve('./runtime/server/utils'))
 
-    nuxt.hook('builder:watch', async () => {
-      const workerFiles = await globby(options.workers ?? 'server/workers/**/*.{ts,js}', {
+    nuxt.hook('build:done', async () => {
+      const workerFiles = await globby(options.workers!, {
         cwd: nuxt.options.srcDir,
+        absolute: true,
       })
 
-      const imports = workerFiles.map((file, index) => {
-        const importPath = relative(nuxt.options.srcDir, join(nuxt.options.srcDir, file)).replace(/\\/g, '/')
-        return `import worker${index} from './${importPath}'`
-      }).join('\n')
+      if (!workerFiles.length) {
+        logger.info('No workers found to bundle.')
+        return
+      }
 
-      const exports = workerFiles.map((_, index) => `  worker${index}`).join(',\n')
+      const imports = workerFiles.map((absPath, i) =>
+        `import worker${i} from ${JSON.stringify(absPath)};`,
+      ).join('\n')
 
-      const content = `${imports}\n\nexport default [\n${exports}\n]`
+      const runners = workerFiles.map((_, i) =>
+        `worker${i}.run();`,
+      ).join('\n')
 
-      const outputDir = join(nuxt.options.rootDir, '.output')
-      const outputFile = join(outputDir, 'workers.mjs')
+      const entryContent = `${imports}\n\n${runners}\n`
+
+      const tempEntryPath = join(nuxt.options.buildDir, 'workers-entry.mjs')
+      await fs.writeFile(tempEntryPath, entryContent)
+
+      const outDir = nuxt.options.dev
+        ? join(nuxt.options.buildDir, 'dist/server')
+        : join(nuxt.options.rootDir, '.output/server')
+
+      const viteConfig: InlineConfig = {
+        root: nuxt.options.rootDir,
+        configFile: false,
+        ssr: {
+          noExternal: true,
+        },
+        build: {
+          ssr: true,
+          target: 'es2020',
+          outDir,
+          emptyOutDir: false,
+          rollupOptions: {
+            input: tempEntryPath,
+            output: {
+              format: 'esm',
+              entryFileNames: 'workers.mjs',
+              inlineDynamicImports: true,
+            },
+          },
+        },
+      }
 
       try {
-        await fs.mkdir(outputDir)
-        await fs.writeFile(outputFile, content)
-        logger.success(`Generated workers.mjs at ${outputFile}`)
+        await viteBuild(viteConfig)
+        logger.success(`Bundled standalone workers at ${join(outDir, 'workers.mjs')}`)
       }
-      catch (error) {
-        logger.error(`Failed to write workers.mjs: ${error}`)
+      catch (err) {
+        logger.error(`Failed to bundle workers.mjs: ${err}`)
       }
     })
   },
