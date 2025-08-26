@@ -49,7 +49,7 @@ export default defineNuxtModule<ModuleOptions>({
           entries = (await readdir(dir, { withFileTypes: true }))
         }
         catch (err) {
-          try { logger.withTag('nuxt-workers').warn('failed to read directory', dir, err as any) } catch {}
+          logger.withTag('nuxt-workers').warn('failed to read directory', dir, err)
           return
         }
         await Promise.all(entries.map(async (entry) => {
