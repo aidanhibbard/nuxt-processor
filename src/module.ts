@@ -1,7 +1,9 @@
-import { defineNuxtModule, createResolver, addTemplate, useLogger } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addTemplate } from '@nuxt/kit'
 import { name, version, configKey, compatibility } from '../package.json'
 import type { RedisOptions } from 'bullmq'
-import { mkdir, readdir, writeFile } from 'node:fs/promises'
+import { readdir } from 'node:fs/promises'
+import type { Plugin, InputPluginOption } from 'rollup'
+import { relative } from 'node:path'
 
 // Module options TypeScript interface definition
 export interface ModuleOptions {
@@ -28,10 +30,8 @@ export default defineNuxtModule<ModuleOptions>({
     workers: [],
   },
   setup(_options, _nuxt) {
-    const logger = useLogger(name)
     const { resolve } = createResolver(import.meta.url)
 
-    const rootDir = _nuxt.options.rootDir
     const buildDir = _nuxt.options.buildDir
     const srcDir = _nuxt.options.srcDir
 
@@ -69,41 +69,39 @@ export default defineNuxtModule<ModuleOptions>({
       return results
     }
 
-    function generateWorkersEntryContent(_workerFiles: string[], _queueFiles: string[]): string {
+    function generateWorkersEntryContent(workerFiles: string[], queueFiles: string[]): string {
       const redisInline = JSON.stringify(_options.redis ?? {})
-      const workersGlob = '/server/workers/**/*.{js,ts,mjs,mts,cjs,cts}'
-      const queuesGlob = '/server/queues/**/*.{js,ts,mjs,mts,cjs,cts}'
+      const allFiles = [...workerFiles, ...queueFiles]
+      const toImportArray = allFiles.map(id => `() => import(${JSON.stringify(id)})`).join(',\n    ')
       return `
 import { fileURLToPath } from 'node:url'
+import { resolve as resolvePath } from 'node:path'
 import { consola } from 'consola'
 import { $workers } from '#workers-utils'
 
-export interface StartedWorkersApp {
-  stop: () => Promise<void>
-}
-
-export async function createWorkersApp(): Promise<StartedWorkersApp> {
+export async function createWorkersApp() {
   const api = $workers()
-  api.setConnection(${redisInline} as any)
+  api.setConnection(${redisInline})
   // Avoid EPIPE when stdout/stderr are closed by terminal (e.g., Ctrl+C piping)
-  const handleStreamError = (err: unknown) => {
-    if (typeof err === 'object' && err && 'code' in (err as any) && (err as any).code === 'EPIPE') return
-    throw err as any
+  const handleStreamError = (err) => {
+    try {
+      const code = (typeof err === 'object' && err && 'code' in err) ? err.code : null
+      if (code === 'EPIPE') return
+    } catch {}
+    throw err
   }
   try { process.stdout?.on?.('error', handleStreamError) } catch {}
   try { process.stderr?.on?.('error', handleStreamError) } catch {}
-  const modules = {
-    ...import.meta.glob(${JSON.stringify(workersGlob)}),
-    ...import.meta.glob(${JSON.stringify(queuesGlob)}),
-  }
-  for (const loader of Object.values(modules)) {
+  const modules = [
+    ${toImportArray}
+  ]
+  for (const loader of modules) {
     await loader()
   }
   const logger = consola.create({}).withTag('nuxt-workers')
   try {
-    // Attach error listeners to all workers
     for (const w of api.workers) {
-      w.on('error', (err: unknown) => logger.error('worker error', err))
+      w.on('error', (err) => logger.error('worker error', err))
     }
     logger.success('workers started: ' + api.workers.length + ', queues: ' + api.queues.length)
   } catch (err) {
@@ -112,19 +110,28 @@ export async function createWorkersApp(): Promise<StartedWorkersApp> {
   return { stop: api.stopAll }
 }
 
-const isMain = typeof process !== 'undefined' && process.argv && process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]
+const isMain = (() => {
+  try {
+    if (typeof process === 'undefined' || !process.argv || !process.argv[1]) return false
+    const argvPath = resolvePath(process.cwd?.() || '.', process.argv[1])
+    const filePath = fileURLToPath(import.meta.url)
+    return filePath === argvPath
+  } catch {
+    return false
+  }
+})()
 if (isMain) {
   const logger = consola.create({}).withTag('nuxt-workers')
   const appPromise = createWorkersApp().catch((err) => {
     logger.error('failed to start workers', err)
     process.exit(1)
-  }) as Promise<StartedWorkersApp>
+  })
   const shutdown = async () => {
     try { logger.info('closing workers...') } catch {}
     try { const app = await appPromise; await app.stop(); try { logger.success('workers closed') } catch {} }
     finally { process.exit(0) }
   }
-  ;['SIGINT','SIGTERM','SIGQUIT'].forEach(sig => process.on(sig as NodeJS.Signals, shutdown))
+  ;['SIGINT','SIGTERM','SIGQUIT'].forEach(sig => process.on(sig, shutdown))
   process.on('beforeExit', shutdown)
 }
 
@@ -132,12 +139,7 @@ export default { createWorkersApp }
 `
     }
 
-    // Create persistent templates under .nuxt
-    const workersEntryPath = addTemplate({
-      filename: 'nuxt-workers/entry.mts',
-      write: true,
-      getContents: () => generateWorkersEntryContent([], []),
-    }).dst
+    // No separate workers entry file is needed; we emit a virtual chunk during Nitro build
 
     // VFS handlers alias (constructor-style DX)
     const { resolve: r } = createResolver(import.meta.url)
@@ -186,77 +188,67 @@ declare module '#bullmq' {
       opts.tsConfig.include.push(resolve(buildDir, typesDtsPath))
     })
 
-    async function buildWorkersBundle(outDir: string) {
-      const entry = resolve(buildDir, workersEntryPath)
-      // Regenerate the entry with current discovered files
-      const workerFiles = await collectFiles(resolve(srcDir, 'server/workers'))
-      const queueFiles = await collectFiles(resolve(srcDir, 'server/queues'))
-      if (workerFiles.length === 0 && queueFiles.length === 0) {
-        logger.info('No workers or queues found. Skipping workers bundle.')
-        return
+    // Create a Rollup plugin that emits a virtual workers chunk into Nitro's output
+    function createWorkersRollupPlugin(): Plugin {
+      const VIRTUAL_ID = '\u0000nuxt-workers-entry'
+      let virtualCode = ''
+      let entryRefId: string | null = null
+      return {
+        name: 'nuxt-workers-emit',
+        async buildStart() {
+          const workerFiles = await collectFiles(resolve(srcDir, 'server/workers'))
+          const queueFiles = await collectFiles(resolve(srcDir, 'server/queues'))
+          if (workerFiles.length === 0 && queueFiles.length === 0) {
+            virtualCode = ''
+            return
+          }
+          virtualCode = generateWorkersEntryContent(workerFiles, queueFiles)
+          for (const id of [...workerFiles, ...queueFiles]) {
+            this.addWatchFile(id)
+          }
+          // Emit the virtual workers entry as its own chunk early in the build
+          entryRefId = this.emitFile({ type: 'chunk', id: VIRTUAL_ID, fileName: 'workers/_entry.mjs' })
+        },
+        resolveId(id: string) {
+          if (id === VIRTUAL_ID) return VIRTUAL_ID
+        },
+        load(id: string) {
+          if (id === VIRTUAL_ID) return virtualCode || 'export {}\n'
+        },
+        generateBundle() {
+          if (!virtualCode || !entryRefId) return
+          const entryFile = this.getFileName(entryRefId)
+          const fromDir = 'workers'
+          const rel = './' + relative(fromDir, entryFile).split('\\').join('/')
+          const wrapper = `import { createWorkersApp } from '${rel}'\n`
+            + `import { consola } from 'consola'\n`
+            + `const logger = consola.create({}).withTag('nuxt-workers')\n`
+            + `const appPromise = createWorkersApp().catch((err) => { logger.error('failed to start workers', err); process.exit(1) })\n`
+            + `let shuttingDown = false\n`
+            + `const shutdown = async (signal) => { if (shuttingDown) return; shuttingDown = true; try { logger.info('closing workers' + (signal ? ' ('+signal+')' : '') + '...') } catch {} ; try { const app = await appPromise; await app.stop(); try { logger.success('workers closed') } catch {} } catch (err) { try { logger.error('shutdown error', err) } catch {} } finally { setTimeout(() => process.exit(0), 0) } }\n`
+            + `[ 'SIGINT','SIGTERM','SIGQUIT' ].forEach(sig => process.on(sig, () => shutdown(sig)))\n`
+            + `process.on('beforeExit', () => shutdown('beforeExit'))\n`
+          this.emitFile({ type: 'asset', fileName: 'workers/index.mjs', source: wrapper })
+        },
       }
-      const contents = generateWorkersEntryContent(workerFiles, queueFiles)
-      await mkdir(resolve(buildDir, 'nuxt-workers'), { recursive: true })
-      await writeFile(entry, contents, 'utf8')
-      const viteModuleName = 'vite'
-      const { build } = await import(viteModuleName)
-      logger.info(`Building workers bundle → ${outDir}`)
-      await build({
-        root: rootDir,
-        logLevel: 'error',
-        ssr: { noExternal: true },
-        resolve: {
-          alias: _nuxt.options.alias ?? {},
-        },
-        build: {
-          ssr: true,
-          outDir,
-          emptyOutDir: true,
-          rollupOptions: {
-            input: entry,
-            output: {
-              format: 'esm',
-              entryFileNames: 'index.mjs',
-              chunkFileNames: 'chunks/[name]-[hash].mjs',
-            },
-          },
-        },
-      })
-      logger.success(`Workers bundle built at ${outDir}`)
     }
 
-    // DEV: watch and rebuild on HMR
-    _nuxt.hooks.hook('vite:serverCreated', (server) => {
-      const devOutDir = resolve(buildDir, 'workers')
-      const watchGlobs = [
-        resolve(srcDir, 'server/workers'),
-        resolve(srcDir, 'server/queues'),
-      ]
-      server.watcher.add(watchGlobs)
-      const debounce = (fn: () => void, ms: number) => {
-        let t: NodeJS.Timeout | undefined
-        return () => {
-          if (t) clearTimeout(t)
-          t = setTimeout(fn, ms)
-        }
+    // Inject our Rollup plugin into Nitro so it emits the workers chunk without a separate build
+    _nuxt.hooks.hook('nitro:config', (nitroConfig) => {
+      nitroConfig.rollupConfig = nitroConfig.rollupConfig || {}
+      const plugin = createWorkersRollupPlugin()
+      const current = nitroConfig.rollupConfig.plugins as InputPluginOption | InputPluginOption[] | undefined
+      if (Array.isArray(current)) {
+        nitroConfig.rollupConfig.plugins = [...current, plugin]
       }
-      const run = debounce(() => {
-        buildWorkersBundle(devOutDir).catch((err: unknown) => logger.error(String(err)))
-      }, 150)
-      server.watcher.on('add', run)
-      server.watcher.on('change', run)
-      server.watcher.on('unlink', run)
-      // initial build
-      buildWorkersBundle(devOutDir).catch((err: unknown) => logger.error(String(err)))
+      else if (current) {
+        nitroConfig.rollupConfig.plugins = [current, plugin]
+      }
+      else {
+        nitroConfig.rollupConfig.plugins = [plugin]
+      }
     })
 
-    // PROD: after Nitro compiles, emit alongside its server output
-    _nuxt.hooks.hook('nitro:init', (nitro) => {
-      nitro.hooks.hook('compiled', async () => {
-        const outDir = resolve(nitro.options.output?.dir ?? resolve(rootDir, '.output'), 'workers')
-        await mkdir(outDir, { recursive: true })
-        await buildWorkersBundle(outDir)
-      })
-    })
+    // The workers chunk will be emitted to Nitro's output as workers/index.mjs
   },
 })
