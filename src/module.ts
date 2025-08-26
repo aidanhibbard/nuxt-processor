@@ -70,10 +70,9 @@ export default defineNuxtModule<ModuleOptions>({
       return results
     }
 
-    function generateWorkersEntryContent(workerFiles: string[], queueFiles: string[]): string {
+    function generateWorkersEntryContent(workerFiles: string[]): string {
       const redisInline = JSON.stringify(_options.redis ?? {})
-      const allFiles = [...workerFiles, ...queueFiles]
-      const toImportArray = allFiles.map(id => `() => import(${JSON.stringify(id)})`).join(',\n    ')
+      const toImportArray = workerFiles.map(id => `() => import(${JSON.stringify(id)})`).join(',\n    ')
       return `
 import { fileURLToPath } from 'node:url'
 import { resolve as resolvePath } from 'node:path'
@@ -104,7 +103,7 @@ export async function createWorkersApp() {
     for (const w of api.workers) {
       w.on('error', (err) => logger.error('worker error', err))
     }
-    logger.success('workers started: ' + api.workers.length + ', queues: ' + api.queues.length)
+    logger.success('workers started')
   } catch (err) {
     logger.error('failed to initialize workers', err)
   }
@@ -198,13 +197,12 @@ declare module '#bullmq' {
         name: 'nuxt-workers-emit',
         async buildStart() {
           const workerFiles = await collectFiles(resolve(srcDir, 'server/workers'))
-          const queueFiles = await collectFiles(resolve(srcDir, 'server/queues'))
-          if (workerFiles.length === 0 && queueFiles.length === 0) {
+          if (workerFiles.length === 0) {
             virtualCode = ''
             return
           }
-          virtualCode = generateWorkersEntryContent(workerFiles, queueFiles)
-          for (const id of [...workerFiles, ...queueFiles]) {
+          virtualCode = generateWorkersEntryContent(workerFiles)
+          for (const id of workerFiles) {
             this.addWatchFile(id)
           }
           // Emit the virtual workers entry as its own chunk early in the build
