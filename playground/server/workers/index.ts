@@ -1,6 +1,10 @@
+import { defineWorker } from '#workers'
 import type { Job } from 'bullmq'
-import defineWorker from 'nuxt-workers'
 
-export default defineWorker('test', async (job: Job) => {
-  return job
+export default defineWorker({
+  name: 'hello',
+  async processor(job: Job) {
+    return job
+  },
+  options: {},
 })
