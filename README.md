@@ -1,4 +1,4 @@
-# Nuxt Workers
+# Nuxt Processor
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
@@ -19,7 +19,7 @@ Background job processing for Nuxt using BullMQ with a dedicated workers process
 ## Install
 
 ```bash
-npm i -D nuxt-workers
+npm i -D nuxt-processor
 ```
 
 Add the module in `nuxt.config.ts` and set your Redis connection.
@@ -27,7 +27,7 @@ Add the module in `nuxt.config.ts` and set your Redis connection.
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ['nuxt-workers'],
+  modules: ['nuxt-processor'],
   workers: {
     redis: {
       host: process.env.NUXT_REDIS_HOST ?? '127.0.0.1', // defaults '127.0.0.1'
