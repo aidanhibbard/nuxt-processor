@@ -8,7 +8,6 @@
 Background job processing for Nuxt using BullMQ with a dedicated workers process.
 
 - [✨ &nbsp;Release Notes](/CHANGELOG.md)
-<!-- - [🏀 Online playground](https://stackblitz.com/github/your-org/my-module?file=playground%2Fapp.vue) -->
 <!-- - [📖 &nbsp;Documentation](https://example.com) -->
 
 ## Features
@@ -16,8 +15,6 @@ Background job processing for Nuxt using BullMQ with a dedicated workers process
 - **Dedicated processing**: Workers run in a separate Node process – no coupling to your web server.
 - **Scalability**: Run multiple worker processes and instances across machines; backed by Redis.
 - **Simple DX**: Define queues/workers in `server/queues` and `server/workers` using first-class helpers.
-- **Safe dev**: Workers do not auto-start with Nitro; start them explicitly.
-- **Bull Board ready**: Expose Bull Board in your app without importing worker code.
 
 ## Install
 
