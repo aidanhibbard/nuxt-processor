@@ -7,14 +7,14 @@ Find and replace all on all files (CMD+SHIFT+F):
 - Description: My new Nuxt module
 -->
 
-# My Module
+# Nuxt Workers
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
 [![License][license-src]][license-href]
 [![Nuxt][nuxt-src]][nuxt-href]
 
-My new Nuxt module for doing amazing things.
+Background job processing for Nuxt using BullMQ with a dedicated workers process.
 
 - [✨ &nbsp;Release Notes](/CHANGELOG.md)
 <!-- - [🏀 Online playground](https://stackblitz.com/github/your-org/my-module?file=playground%2Fapp.vue) -->
@@ -22,20 +22,81 @@ My new Nuxt module for doing amazing things.
 
 ## Features
 
-<!-- Highlight some of the features your module provide here -->
-- ⛰ &nbsp;Foo
-- 🚠 &nbsp;Bar
-- 🌲 &nbsp;Baz
+- **Dedicated processing**: Workers run in a separate Node process – no coupling to your web server.
+- **Scalability**: Run multiple worker processes and instances across machines; backed by Redis.
+- **Simple DX**: Define queues/workers in `server/queues` and `server/workers` using first-class helpers.
+- **Safe dev**: Workers do not auto-start with Nitro; start them explicitly.
+- **Bull Board ready**: Expose Bull Board in your app without importing worker code.
 
-## Quick Setup
+## Install
 
-Install the module to your Nuxt application with one command:
+Since this is not an official Nuxt module yet, install it as a dev dependency and manually add it to your Nuxt config.
 
 ```bash
-npx nuxi module add my-module
+npm i -D nuxt-workers
 ```
 
-That's it! You can now use My Module in your Nuxt app ✨
+Add the module in `nuxt.config.ts` and set your Redis connection.
+
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  modules: ['nuxt-workers'],
+  workers: {
+    redis: {
+      host: process.env.NUXT_REDIS_HOST ?? '127.0.0.1', // defaults '127.0.0.1'
+      port: Number(process.env.NUXT_REDIS_PORT ?? 6379), // defaults 6379
+      password: process.env.NUXT_REDIS_PASSWORD ?? '', // defaults ''
+    },
+  },
+})
+```
+
+## Define a queue and enqueue from your app
+
+Create `server/queues/index.ts`:
+
+```ts
+import { defineQueue } from '#workers'
+
+export default defineQueue({
+  name: 'hello',
+})
+```
+
+## Define a worker
+
+Create `server/workers/index.ts`:
+
+```ts
+import { defineWorker } from '#workers'
+import type { Job } from '#bullmq'
+
+export default defineWorker({
+  name: 'hello',
+  async processor(job: Job) {
+    // do work
+    console.log('processed', job.name, job.data)
+    return job.data
+  },
+  options: {},
+})
+```
+
+## Running
+
+- Start your Nuxt app normally (dev or build). This module generates a dedicated workers entry.
+- Start workers explicitly in a separate terminal:
+
+```bash
+# after a build
+nuxi build
+node .output/server/workers/index.mjs
+```
+
+## Shutdown
+
+The workers process handles graceful shutdown on `SIGINT/SIGTERM` and logs worker start/stop.
 
 
 ## Contribution
