@@ -4,7 +4,7 @@ import type { Job } from 'bullmq'
 export default defineWorker({
   name: 'hello',
   async processor(job: Job) {
-    return job
+    return job.data
   },
   options: {},
 })

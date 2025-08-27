@@ -35,6 +35,7 @@ export function $workers() {
     const worker = new Worker(name, processor, {
       connection: registry.connection as QueueOptions['connection'],
       ...options,
+      autorun: false,
     })
     registry.workers.push(worker)
     return worker

@@ -2,7 +2,7 @@ import { defineNuxtModule, createResolver, addTemplate, logger } from '@nuxt/kit
 import { name, version, configKey, compatibility } from '../package.json'
 import type { RedisOptions } from 'bullmq'
 import { readdir } from 'node:fs/promises'
-import type { Plugin, InputPluginOption } from 'rollup'
+import type { Plugin } from 'rollup'
 import { relative } from 'node:path'
 
 // Module options TypeScript interface definition
@@ -79,15 +79,18 @@ import { resolve as resolvePath } from 'node:path'
 import { consola } from 'consola'
 import { $workers } from '#workers-utils'
 
+// Initialize connection as early as possible so any imports that register
+// workers/queues have a valid connection available.
+const api = $workers()
+api.setConnection(${redisInline})
+
 export async function createWorkersApp() {
-  const api = $workers()
-  api.setConnection(${redisInline})
   // Avoid EPIPE when stdout/stderr are closed by terminal (e.g., Ctrl+C piping)
   const handleStreamError = (err) => {
     try {
       const code = (typeof err === 'object' && err && 'code' in err) ? err.code : null
       if (code === 'EPIPE') return
-    } catch (e) { try { console.warn?.('nuxt-workers: stream error inspection failed', e) } catch {} }
+    } catch (e) { console.warn?.('nuxt-workers: stream error inspection failed', e) }
     throw err
   }
   try { process.stdout?.on?.('error', handleStreamError) } catch (err) { console.warn('nuxt-workers: failed to attach stdout error handler', err) }
@@ -100,14 +103,27 @@ export async function createWorkersApp() {
   }
   const logger = consola.create({}).withTag('nuxt-workers')
   try {
+    const workerNames = Array.isArray(api.workers) ? api.workers.map(w => w && w.name).filter(Boolean) : []
+    logger.info('starting workers:\\n' + workerNames.map(n => ' - ' + n).join('\\n'))
     for (const w of api.workers) {
       w.on('error', (err) => logger.error('worker error', err))
+    }
+    // Explicitly start workers since autorun is disabled
+    for (const w of api.workers) {
+      try {
+        // run() returns a promise that resolves when the worker stops; do not await to avoid blocking
+        // eslint-disable-next-line promise/catch-or-return
+        w.run().catch((err) => logger.error('worker run error', err))
+      }
+      catch (err) {
+        logger.error('failed to start worker', err)
+      }
     }
     logger.success('workers started')
   } catch (err) {
     logger.error('failed to initialize workers', err)
   }
-  return { stop: api.stopAll }
+  return { stop: api.stopAll, workers: api.workers }
 }
 
 const isMain = (() => {
@@ -128,7 +144,15 @@ if (isMain) {
   })
   const shutdown = async () => {
     try { logger.info('closing workers...') } catch (err) { console.warn('nuxt-workers: failed to log shutdown start', err) }
-    try { const app = await appPromise; await app.stop(); try { logger.success('workers closed') } catch (err2) { console.warn('nuxt-workers: failed to log shutdown complete', err2) } }
+    try {
+      const app = await appPromise
+      try {
+        const names = (app?.workers || []).map(w => w && w.name).filter(Boolean)
+        logger.info('closing workers:\\n' + names.map(n => ' - ' + n).join('\\n'))
+      } catch (eL) { console.warn('nuxt-workers: failed to log workers list on shutdown', eL) }
+      await app.stop()
+      try { logger.success('workers closed') } catch (err2) { console.warn('nuxt-workers: failed to log shutdown complete', err2) }
+    }
     finally { process.exit(0) }
   }
   ;['SIGINT','SIGTERM','SIGQUIT'].forEach(sig => process.on(sig, shutdown))
@@ -224,7 +248,7 @@ declare module '#bullmq' {
             + `const logger = consola.create({}).withTag('nuxt-workers')\n`
             + `const appPromise = createWorkersApp().catch((err) => { logger.error('failed to start workers', err); process.exit(1) })\n`
             + `let shuttingDown = false\n`
-            + `const shutdown = async (signal) => { if (shuttingDown) return; shuttingDown = true; try { logger.info('closing workers' + (signal ? ' ('+signal+')' : '') + '...') } catch (e) { console.warn('nuxt-workers: failed to log shutdown start', e) } ; try { const app = await appPromise; await app.stop(); try { logger.success('workers closed') } catch (e2) { console.warn('nuxt-workers: failed to log shutdown complete', e2) } } catch (err) { try { logger.error('shutdown error', err) } catch (e3) { console.warn('nuxt-workers: failed to log shutdown error', e3) } } finally { setTimeout(() => process.exit(0), 0) } }\n`
+            + `const shutdown = async (signal) => { if (shuttingDown) return; shuttingDown = true; try { logger.info('closing workers' + (signal ? ' ('+signal+')' : '') + '...') } catch (e) { console.warn('nuxt-workers: failed to log shutdown start', e) } ; try { const app = await appPromise; try { const names = (app?.workers || []).map(w => w && w.name).filter(Boolean); logger.info('closing workers:\\n' + names.map(n => ' - ' + n).join('\\n')) } catch (eL) { console.warn('nuxt-workers: failed to log workers list on shutdown', eL) } await app.stop(); try { logger.success('workers closed') } catch (e2) { console.warn('nuxt-workers: failed to log shutdown complete', e2) } } catch (err) { try { logger.error('shutdown error', err) } catch (e3) { console.warn('nuxt-workers: failed to log shutdown error', e3) } } finally { setTimeout(() => process.exit(0), 0) } }\n`
             + `[ 'SIGINT','SIGTERM','SIGQUIT' ].forEach(sig => process.on(sig, () => shutdown(sig)))\n`
             + `process.on('beforeExit', () => shutdown('beforeExit'))\n`
           this.emitFile({ type: 'asset', fileName: 'workers/index.mjs', source: wrapper })
@@ -234,9 +258,9 @@ declare module '#bullmq' {
 
     // Inject our Rollup plugin into Nitro so it emits the workers chunk without a separate build
     _nuxt.hooks.hook('nitro:config', (nitroConfig) => {
-      nitroConfig.rollupConfig = nitroConfig.rollupConfig || {}
+      nitroConfig.rollupConfig = nitroConfig.rollupConfig ?? {}
       const plugin = createWorkersRollupPlugin()
-      const current = nitroConfig.rollupConfig.plugins as InputPluginOption | InputPluginOption[] | undefined
+      const current = nitroConfig.rollupConfig.plugins
       if (Array.isArray(current)) {
         nitroConfig.rollupConfig.plugins = [...current, plugin]
       }
