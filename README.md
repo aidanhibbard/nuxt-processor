@@ -30,8 +30,6 @@ Background job processing for Nuxt using BullMQ with a dedicated workers process
 
 ## Install
 
-Since this is not an official Nuxt module yet, install it as a dev dependency and manually add it to your Nuxt config.
-
 ```bash
 npm i -D nuxt-workers
 ```
