@@ -35,7 +35,10 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit"
+    "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
+    "vp:dev": "vitepress dev docs",
+    "vp:build": "vitepress build docs",
+    "vp:preview": "vitepress preview docs"
   },
   "dependencies": {
     "@nuxt/kit": "^4.0.3",
@@ -54,6 +57,7 @@
     "eslint": "^9.34.0",
     "nuxt": "^4.0.3",
     "typescript": "~5.9.2",
+    "vitepress": "^2.0.0-alpha.12",
     "vitest": "^3.2.4",
     "vue-tsc": "^3.0.6"
   }
