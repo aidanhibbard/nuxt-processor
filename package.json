@@ -1,11 +1,11 @@
 {
-  "name": "nuxt-workers",
+  "name": "nuxt-processor",
   "version": "0.0.0",
-  "description": "Nuxt Workers",
-  "repository": "https://github.com/aidanhibbard/nuxt-workers",
+  "description": "Nuxt Processor",
+  "repository": "https://github.com/aidanhibbard/nuxt-processor",
   "license": "MIT",
   "type": "module",
-  "configKey": "workers",
+  "configKey": "processor",
   "compatibility": {
     "nuxt": "^4.0.0"
   },

@@ -49,7 +49,7 @@ export default defineNuxtModule<ModuleOptions>({
           entries = (await readdir(dir, { withFileTypes: true }))
         }
         catch (err) {
-          logger.withTag('nuxt-workers').warn('failed to read directory', dir, err)
+          logger.withTag('nuxt-processor').warn('failed to read directory', dir, err)
           return
         }
         await Promise.all(entries.map(async (entry) => {
@@ -90,18 +90,18 @@ export async function createWorkersApp() {
     try {
       const code = (typeof err === 'object' && err && 'code' in err) ? err.code : null
       if (code === 'EPIPE') return
-    } catch (e) { console.warn?.('nuxt-workers: stream error inspection failed', e) }
+    } catch (e) { console.warn?.('nuxt-processor: stream error inspection failed', e) }
     throw err
   }
-  try { process.stdout?.on?.('error', handleStreamError) } catch (err) { console.warn('nuxt-workers: failed to attach stdout error handler', err) }
-  try { process.stderr?.on?.('error', handleStreamError) } catch (err) { console.warn('nuxt-workers: failed to attach stderr error handler', err) }
+  try { process.stdout?.on?.('error', handleStreamError) } catch (err) { console.warn('nuxt-processor: failed to attach stdout error handler', err) }
+  try { process.stderr?.on?.('error', handleStreamError) } catch (err) { console.warn('nuxt-processor: failed to attach stderr error handler', err) }
   const modules = [
     ${toImportArray}
   ]
   for (const loader of modules) {
     await loader()
   }
-  const logger = consola.create({}).withTag('nuxt-workers')
+  const logger = consola.create({}).withTag('nuxt-processor')
   try {
     const workerNames = Array.isArray(api.workers) ? api.workers.map(w => w && w.name).filter(Boolean) : []
     logger.info('starting workers:\\n' + workerNames.map(n => ' - ' + n).join('\\n'))
@@ -137,21 +137,21 @@ const isMain = (() => {
   }
 })()
 if (isMain) {
-  const logger = consola.create({}).withTag('nuxt-workers')
+  const logger = consola.create({}).withTag('nuxt-processor')
   const appPromise = createWorkersApp().catch((err) => {
     logger.error('failed to start workers', err)
     process.exit(1)
   })
   const shutdown = async () => {
-    try { logger.info('closing workers...') } catch (err) { console.warn('nuxt-workers: failed to log shutdown start', err) }
+    try { logger.info('closing workers...') } catch (err) { console.warn('nuxt-processor: failed to log shutdown start', err) }
     try {
       const app = await appPromise
       try {
         const names = (app?.workers || []).map(w => w && w.name).filter(Boolean)
         logger.info('closing workers:\\n' + names.map(n => ' - ' + n).join('\\n'))
-      } catch (eL) { console.warn('nuxt-workers: failed to log workers list on shutdown', eL) }
+      } catch (eL) { console.warn('nuxt-processor: failed to log workers list on shutdown', eL) }
       await app.stop()
-      try { logger.success('workers closed') } catch (err2) { console.warn('nuxt-workers: failed to log shutdown complete', err2) }
+      try { logger.success('workers closed') } catch (err2) { console.warn('nuxt-processor: failed to log shutdown complete', err2) }
     }
     finally { process.exit(0) }
   }
@@ -170,7 +170,7 @@ export default { createWorkersApp }
 
     // Alias inside the app to the identity API so user imports resolve at build-time
     _nuxt.options.alias = _nuxt.options.alias || {}
-    _nuxt.options.alias['nuxt-workers'] = r('./runtime/server/handlers')
+    _nuxt.options.alias['nuxt-processor'] = r('./runtime/server/handlers')
     _nuxt.options.alias['#workers'] = r('./runtime/server/handlers')
     _nuxt.options.alias['#workers-utils'] = r('./runtime/server/utils/workers')
     // Allow swapping BullMQ implementation allowing for bullmq pro (default to 'bullmq')
@@ -180,10 +180,10 @@ export default { createWorkersApp }
 
     // Provide TypeScript declarations for the alias so IDE/type-check recognizes named exports
     const typesDtsPath = addTemplate({
-      filename: 'types/nuxt-workers.d.ts',
+      filename: 'types/nuxt-processor.d.ts',
       write: true,
       getContents: () => `
-declare module 'nuxt-workers' {
+declare module 'nuxt-processor' {
   export { defineQueue } from '${r('./runtime/server/handlers/defineQueue')}'
   export { defineWorker } from '${r('./runtime/server/handlers/defineWorker')}'
 }
@@ -205,7 +205,7 @@ declare module '#bullmq' {
 
     _nuxt.hooks.hook('prepare:types', (opts) => {
       // Ensure our generated d.ts is included in the TS config
-      // so "import { defineWorker } from 'nuxt-workers'" type-checks
+      // so "import { defineWorker } from 'nuxt-processor'" type-checks
       // across IDE and build.
       // Nuxt merges this into .nuxt/tsconfig.json
       if (!opts.tsConfig.include) opts.tsConfig.include = []
@@ -214,11 +214,11 @@ declare module '#bullmq' {
 
     // Create a Rollup plugin that emits a virtual workers chunk into Nitro's output
     function createWorkersRollupPlugin(): Plugin {
-      const VIRTUAL_ID = '\u0000nuxt-workers-entry'
+      const VIRTUAL_ID = '\u0000nuxt-processor-entry'
       let virtualCode = ''
       let entryRefId: string | null = null
       return {
-        name: 'nuxt-workers-emit',
+        name: 'nuxt-processor-emit',
         async buildStart() {
           const workerFiles = await collectFiles(resolve(srcDir, 'server/workers'))
           if (workerFiles.length === 0) {
@@ -245,10 +245,10 @@ declare module '#bullmq' {
           const rel = './' + relative(fromDir, entryFile).split('\\').join('/')
           const wrapper = `import { createWorkersApp } from '${rel}'\n`
             + `import { consola } from 'consola'\n`
-            + `const logger = consola.create({}).withTag('nuxt-workers')\n`
+            + `const logger = consola.create({}).withTag('nuxt-processor')\n`
             + `const appPromise = createWorkersApp().catch((err) => { logger.error('failed to start workers', err); process.exit(1) })\n`
             + `let shuttingDown = false\n`
-            + `const shutdown = async (signal) => { if (shuttingDown) return; shuttingDown = true; try { logger.info('closing workers' + (signal ? ' ('+signal+')' : '') + '...') } catch (e) { console.warn('nuxt-workers: failed to log shutdown start', e) } ; try { const app = await appPromise; try { const names = (app?.workers || []).map(w => w && w.name).filter(Boolean); logger.info('closing workers:\\n' + names.map(n => ' - ' + n).join('\\n')) } catch (eL) { console.warn('nuxt-workers: failed to log workers list on shutdown', eL) } await app.stop(); try { logger.success('workers closed') } catch (e2) { console.warn('nuxt-workers: failed to log shutdown complete', e2) } } catch (err) { try { logger.error('shutdown error', err) } catch (e3) { console.warn('nuxt-workers: failed to log shutdown error', e3) } } finally { setTimeout(() => process.exit(0), 0) } }\n`
+            + `const shutdown = async (signal) => { if (shuttingDown) return; shuttingDown = true; try { logger.info('closing workers' + (signal ? ' ('+signal+')' : '') + '...') } catch (e) { console.warn('nuxt-processor: failed to log shutdown start', e) } ; try { const app = await appPromise; try { const names = (app?.workers || []).map(w => w && w.name).filter(Boolean); logger.info('closing workers:\\n' + names.map(n => ' - ' + n).join('\\n')) } catch (eL) { console.warn('nuxt-processor: failed to log workers list on shutdown', eL) } await app.stop(); try { logger.success('workers closed') } catch (e2) { console.warn('nuxt-processor: failed to log shutdown complete', e2) } } catch (err) { try { logger.error('shutdown error', err) } catch (e3) { console.warn('nuxt-processor: failed to log shutdown error', e3) } } finally { setTimeout(() => process.exit(0), 0) } }\n`
             + `[ 'SIGINT','SIGTERM','SIGQUIT' ].forEach(sig => process.on(sig, () => shutdown(sig)))\n`
             + `process.on('beforeExit', () => shutdown('beforeExit'))\n`
           this.emitFile({ type: 'asset', fileName: 'workers/index.mjs', source: wrapper })
