@@ -55,6 +55,7 @@
     "@types/node": "latest",
     "changelogen": "^0.6.2",
     "eslint": "^9.34.0",
+    "happy-dom": "^18.0.1",
     "nuxt": "^4.0.3",
     "typescript": "~5.9.2",
     "vitepress": "^2.0.0-alpha.12",
