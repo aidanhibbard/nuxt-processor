@@ -13,7 +13,7 @@ Background job processing for Nuxt using BullMQ with a dedicated workers process
 ## Features
 
 - **Dedicated processing**: Workers run in a separate Node process – no coupling to your web server.
-- **Scalability**: Run multiple worker processes and instances across machines; backed by Redis.
+- **Scalability**: Run multiple worker processes and instances across machines.
 - **Simple DX**: Define queues/workers in `server/queues` and `server/workers` using first-class helpers.
 
 ## Install
