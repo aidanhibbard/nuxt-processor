@@ -75,15 +75,9 @@ export default defineWorker({
 - Start workers explicitly in a separate terminal:
 
 ```bash
-# after a build
 nuxi build
 node .output/server/workers/index.mjs
 ```
-
-## Shutdown
-
-The workers process handles graceful shutdown on `SIGINT/SIGTERM` and logs worker start/stop.
-
 
 ## Contribution
 
