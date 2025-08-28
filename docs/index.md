@@ -16,7 +16,7 @@ hero:
 
 features:
   - title: "🚀 Dedicated processing"
-    details: Workers run in a separate Node process – no coupling to your web server.
+    details: Workers run in a separate Node process with no coupling to your web server.
   - title: "📈 Scalability"
     details: Run multiple worker processes and instances across machines.
   - title: "✨ Simple DX"
