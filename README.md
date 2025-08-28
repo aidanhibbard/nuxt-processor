@@ -6,7 +6,7 @@
 
 Background job processing for Nuxt using BullMQ with a dedicated workers process.
 
-Note: This package is under very active development! Please consider create issues if you run into anything!
+Note: This package is under very active development! Please consider creating issues if you run into anything!
 
 - [✨ &nbsp;Release Notes](/CHANGELOG.md)
 <!-- - [📖 &nbsp;Documentation](https://example.com) -->
@@ -16,6 +16,15 @@ Note: This package is under very active development! Please consider create issu
 - **Dedicated processing**: Workers run in a separate Node process – no coupling to your web server.
 - **Scalability**: Run multiple worker processes and instances across machines.
 - **Simple DX**: Define queues/workers in `server/queues` and `server/workers` using first-class helpers.
+
+## Sections
+
+- [Install](#install)
+- [Define a queue and enqueue from your app](#define-a-queue-and-enqueue-from-your-app)
+- [Define a worker](#define-a-worker)
+- [Running](#running)
+- [Bull Board](#bull-board)
+- [Contribution](#contribution)
 
 ## Install
 
@@ -79,6 +88,18 @@ export default defineWorker({
 nuxi build
 node .output/server/workers/index.mjs
 ```
+
+## Bull Board
+
+[Bull Board](https://github.com/felixmosh/bull-board) is an excellent UI for watching your queues, you can follow the setup in the playground to use it.
+
+- [Server handler](./playground/server/handlers/bull-board.ts)
+- [Route: `playground/server/routes/bull-board.ts`](./playground/server/routes/bull-board.ts)
+- [Route: `playground/server/routes/bull-board/[...].ts`](./playground/server/routes/bull-board/%5B...%5D.ts)
+
+Special thanks to [@genu](https://github.com/genu) for creating the H3 adapter.
+
+For more help getting set up, see this Bull Board H3 adapter comment: <https://github.com/felixmosh/bull-board/pull/669#issuecomment-1883997968>.
 
 ## Contribution
 
