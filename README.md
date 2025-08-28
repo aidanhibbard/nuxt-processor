@@ -6,6 +6,8 @@
 
 Background job processing for Nuxt using BullMQ with a dedicated workers process.
 
+<img width="763" height="321" alt="image" src="https://github.com/user-attachments/assets/f49d79a9-f99a-4612-b3bc-cad724475bf4" />
+
 Note: This package is under very active development! Please consider creating issues if you run into anything!
 
 - [✨ &nbsp;Release Notes](/CHANGELOG.md)
