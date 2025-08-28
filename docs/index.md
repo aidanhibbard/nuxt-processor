@@ -5,21 +5,20 @@ layout: home
 hero:
   name: "Nuxt Processor"
   text: "Dedicated processing for Nuxt apps"
-  tagline: My great project tagline
+  tagline: Background job processing for Nuxt using BullMQ
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: Get Started
+      link: /getting-started
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: Define a Worker
+      link: /define-worker
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: "🚀 Dedicated processing"
+    details: Workers run in a separate Node process – no coupling to your web server.
+  - title: "📈 Scalability"
+    details: Run multiple worker processes and instances across machines.
+  - title: "✨ Simple DX"
+    details: Define queues/workers in `server/queues` and `server/workers` using first-class helpers.
 ---
-
