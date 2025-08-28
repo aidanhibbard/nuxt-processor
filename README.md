@@ -40,7 +40,7 @@ Add the module in `nuxt.config.ts` and set your Redis connection.
 // nuxt.config.ts
 export default defineNuxtConfig({
   modules: ['nuxt-processor'],
-  workers: {
+  processor: {
     redis: {
       host: process.env.NUXT_REDIS_HOST ?? '127.0.0.1', // defaults '127.0.0.1'
       port: Number(process.env.NUXT_REDIS_PORT ?? 6379), // defaults 6379
