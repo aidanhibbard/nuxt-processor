@@ -83,8 +83,15 @@ export default defineWorker({
 
 ## Running
 
-- Start your Nuxt app normally (dev or build). This module generates a dedicated workers entry.
-- Start workers explicitly in a separate terminal:
+- Start your Nuxt app normally. This module generates a dedicated workers entry.
+- In development, run workers from `.nuxt/dev/workers/index.mjs` in a separate terminal:
+
+```bash
+nuxi dev
+node .nuxt/dev/workers/index.mjs
+```
+
+- After building for production, run workers from `.output/server/workers/index.mjs`:
 
 ```bash
 nuxi build
