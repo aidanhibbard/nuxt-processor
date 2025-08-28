@@ -6,6 +6,8 @@
 
 Background job processing for Nuxt using BullMQ with a dedicated workers process.
 
+Note: This package is under very active development! Please consider create issues if you run into anything!
+
 - [✨ &nbsp;Release Notes](/CHANGELOG.md)
 <!-- - [📖 &nbsp;Documentation](https://example.com) -->
 
