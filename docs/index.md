@@ -20,5 +20,5 @@ features:
   - title: "📈 Scalability"
     details: Run multiple worker processes and instances across machines.
   - title: "✨ Simple DX"
-    details: Define queues/workers in `server/queues` and `server/workers` using first-class helpers.
+    details: Define queues/workers using first-class helpers.
 ---
