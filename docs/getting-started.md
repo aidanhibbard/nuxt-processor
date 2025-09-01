@@ -66,7 +66,7 @@ nuxi dev
 node .nuxt/dev/workers/index.mjs
 ```
 
-### CLI (recommended in development)
+### CLI
 
 Use the CLI to run workers with file watching and restarts:
 
