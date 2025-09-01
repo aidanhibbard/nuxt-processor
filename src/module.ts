@@ -131,7 +131,7 @@ export default { createWorkersApp }
     }
 
     // Alias inside the app to the identity API so user imports resolve at build-time
-    _nuxt.options.alias = _nuxt.options.alias || {}
+    _nuxt.options.alias = _nuxt.options.alias ?? {}
     _nuxt.options.alias['nuxt-processor'] = resolve('./runtime/server/handlers')
     _nuxt.options.alias['#workers'] = resolve('./runtime/server/handlers')
     _nuxt.options.alias['#workers-utils'] = resolve('./runtime/server/utils/workers')
