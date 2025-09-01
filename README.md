@@ -12,7 +12,7 @@ Background job processing for Nuxt using BullMQ with a dedicated workers process
 Note: This package is under very active development! Please consider creating issues if you run into anything!
 
 - [✨ &nbsp;Release Notes](/CHANGELOG.md)
-<!-- - [📖 &nbsp;Documentation](https://example.com) -->
+- [📖 &nbsp;Documentation](https://aidanhibbard.github.io/nuxt-processor/)
 
 ## Features
 
@@ -26,6 +26,7 @@ Note: This package is under very active development! Please consider creating is
 - [Define a queue and enqueue from your app](#define-a-queue-and-enqueue-from-your-app)
 - [Define a worker](#define-a-worker)
 - [Running](#running)
+- [CLI](#cli)
 - [Bull Board](#bull-board)
 - [Contribution](#contribution)
 
@@ -90,6 +91,33 @@ export default defineWorker({
 ```bash
 nuxi dev
 node .nuxt/dev/workers/index.mjs
+```
+
+### CLI
+
+A simple CLI is provided to run workers in development.
+
+```bash
+# from your project root
+npx nuxt-processor dev
+```
+
+Notes:
+- If `.nuxt/dev/workers/index.mjs` does not exist yet, the CLI will ask you to start your Nuxt dev server first to generate the entry point for your workers.
+- If your `package.json` does not have a `processor:dev` script, the CLI will offer to add:
+
+```json
+{
+  "scripts": {
+    "processor:dev": "nuxt-processor dev"
+  }
+}
+```
+
+Then you can run:
+
+```bash
+npm run processor:dev
 ```
 
 - After building for production, run workers from `.output/server/workers/index.mjs`:

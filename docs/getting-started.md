@@ -66,6 +66,32 @@ nuxi dev
 node .nuxt/dev/workers/index.mjs
 ```
 
+### CLI
+
+Use the CLI to run workers with file watching and restarts:
+
+```bash
+npx nuxt-processor dev
+```
+
+Notes:
+- If `.nuxt/dev/workers/index.mjs` does not exist yet, the CLI will ask you to start your Nuxt dev server first and exit.
+- If your `package.json` does not have a `processor:dev` script, the CLI will offer to add:
+
+```json
+{
+  "scripts": {
+    "processor:dev": "nuxt-processor dev"
+  }
+}
+```
+
+Then you can run:
+
+```bash
+npm run processor:dev
+```
+
 - After building for production, run workers from `.output/server/workers/index.mjs`:
 
 ```bash
