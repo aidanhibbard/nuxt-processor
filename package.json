@@ -23,8 +23,12 @@
       ]
     }
   },
+  "bin": {
+    "nuxt-processor": "./bin/nuxt-processor.mjs"
+  },
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
   "scripts": {
     "prepack": "nuxt-module-build build",
@@ -42,9 +46,12 @@
   },
   "dependencies": {
     "@nuxt/kit": "^4.0.3",
+    "citty": "^0.1.6",
+    "consola": "^3.2.3",
     "bullmq": "^5.58.2",
     "fast-glob": "^3.3.3",
-    "ioredis": "^5.7.0"
+    "ioredis": "^5.7.0",
+    "pathe": "^1.1.2"
   },
   "devDependencies": {
     "@nuxt/devtools": "^2.6.3",
