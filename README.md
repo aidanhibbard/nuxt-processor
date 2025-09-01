@@ -56,7 +56,7 @@ export default defineNuxtConfig({
 Create `server/queues/index.ts`:
 
 ```ts
-import { defineQueue } from '#workers'
+import { defineQueue } from '#processor'
 
 export default defineQueue({
   name: 'hello',
@@ -68,7 +68,7 @@ export default defineQueue({
 Create `server/workers/index.ts`:
 
 ```ts
-import { defineWorker } from '#workers'
+import { defineWorker } from '#processor'
 import type { Job } from '#bullmq'
 
 export default defineWorker({

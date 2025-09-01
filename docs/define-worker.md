@@ -11,7 +11,7 @@ title: Define Worker
 Create `server/workers/index.ts`:
 
 ```ts
-import { defineWorker } from '#workers'
+import { defineWorker } from '#processor'
 import type { Job } from '#bullmq'
 
 export default defineWorker({
