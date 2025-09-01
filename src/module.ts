@@ -1,15 +1,19 @@
-import { defineNuxtModule, createResolver, addTemplate, logger } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addTemplate } from '@nuxt/kit'
 import { name, version, configKey, compatibility } from '../package.json'
 import type { RedisOptions } from 'bullmq'
-import { readdir } from 'node:fs/promises'
 import type { Plugin } from 'rollup'
 import { relative } from 'node:path'
+import scanFolder from './utils/scan-folder'
 
 // Module options TypeScript interface definition
 export interface ModuleOptions {
   redis: RedisOptions
-  queues: string[]
-  workers: string[]
+  /**
+   * The folder containing the worker files
+   * Scans for {ts,js,mjs}
+   * @default 'server/workers'
+   */
+  workers: string
 }
 
 export default defineNuxtModule<ModuleOptions>({
@@ -26,49 +30,12 @@ export default defineNuxtModule<ModuleOptions>({
       port: Number(process.env.NUXT_REDIS_PORT ?? 6379),
       password: process.env.NUXT_REDIS_PASSWORD ?? '',
     },
-    queues: [],
-    workers: [],
+    workers: 'server/workers',
   },
-  setup(_options, _nuxt) {
+  async setup(_options, _nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
     const buildDir = _nuxt.options.buildDir
-    const srcDir = _nuxt.options.srcDir
-
-    // Helper: scan directories for worker/queue files
-    const allowedExtensions = new Set(['.ts', '.js', '.mjs', '.mts', '.cjs', '.cts'])
-    interface SimpleDirent {
-      name: string
-      isDirectory: () => boolean
-    }
-    async function collectFiles(fromDir: string): Promise<string[]> {
-      const results: string[] = []
-      async function walk(dir: string) {
-        let entries: SimpleDirent[] = []
-        try {
-          entries = (await readdir(dir, { withFileTypes: true }))
-        }
-        catch (err) {
-          logger.withTag('nuxt-processor').warn('failed to read directory', dir, err)
-          return
-        }
-        await Promise.all(entries.map(async (entry) => {
-          const fullPath = resolve(dir, entry.name)
-          if (entry.isDirectory()) {
-            await walk(fullPath)
-          }
-          else {
-            const dotIndex = fullPath.lastIndexOf('.')
-            const ext = dotIndex >= 0 ? fullPath.slice(dotIndex) : ''
-            if (allowedExtensions.has(ext)) {
-              results.push(fullPath)
-            }
-          }
-        }))
-      }
-      await walk(fromDir)
-      return results
-    }
 
     function generateWorkersEntryContent(workerFiles: string[]): string {
       const redisInline = JSON.stringify(_options.redis ?? {})
@@ -77,7 +44,7 @@ export default defineNuxtModule<ModuleOptions>({
 import { fileURLToPath } from 'node:url'
 import { resolve as resolvePath } from 'node:path'
 import { consola } from 'consola'
-import { $workers } from '#workers-utils'
+import { $workers } from '#processor-utils'
 
 // Initialize connection as early as possible so any imports that register
 // workers/queues have a valid connection available.
@@ -163,16 +130,11 @@ export default { createWorkersApp }
 `
     }
 
-    // No separate workers entry file is needed; we emit a virtual chunk during Nitro build
-
-    // VFS handlers alias (constructor-style DX)
-    const { resolve: r } = createResolver(import.meta.url)
-
     // Alias inside the app to the identity API so user imports resolve at build-time
-    _nuxt.options.alias = _nuxt.options.alias || {}
-    _nuxt.options.alias['nuxt-processor'] = r('./runtime/server/handlers')
-    _nuxt.options.alias['#workers'] = r('./runtime/server/handlers')
-    _nuxt.options.alias['#workers-utils'] = r('./runtime/server/utils/workers')
+    _nuxt.options.alias = _nuxt.options.alias ?? {}
+    _nuxt.options.alias['nuxt-processor'] = resolve('./runtime/server/handlers')
+    _nuxt.options.alias['#processor'] = resolve('./runtime/server/handlers')
+    _nuxt.options.alias['#processor-utils'] = resolve('./runtime/server/utils/workers')
     // Allow swapping BullMQ implementation allowing for bullmq pro (default to 'bullmq')
     if (!_nuxt.options.alias['#bullmq']) {
       _nuxt.options.alias['#bullmq'] = 'bullmq'
@@ -184,17 +146,17 @@ export default { createWorkersApp }
       write: true,
       getContents: () => `
 declare module 'nuxt-processor' {
-  export { defineQueue } from '${r('./runtime/server/handlers/defineQueue')}'
-  export { defineWorker } from '${r('./runtime/server/handlers/defineWorker')}'
+  export { defineQueue } from '${resolve('./runtime/server/handlers/defineQueue')}'
+  export { defineWorker } from '${resolve('./runtime/server/handlers/defineWorker')}'
 }
 
-declare module '#workers' {
-  export { defineQueue } from '${r('./runtime/server/handlers/defineQueue')}'
-  export { defineWorker } from '${r('./runtime/server/handlers/defineWorker')}'
+declare module '#processor' {
+  export { defineQueue } from '${resolve('./runtime/server/handlers/defineQueue')}'
+  export { defineWorker } from '${resolve('./runtime/server/handlers/defineWorker')}'
 }
 
-declare module '#workers-utils' {
-  export { $workers } from '${r('./runtime/server/utils/workers')}'
+declare module '#processor-utils' {
+  export { $workers } from '${resolve('./runtime/server/utils/workers')}'
 }
 
 declare module '#bullmq' {
@@ -220,7 +182,7 @@ declare module '#bullmq' {
       return {
         name: 'nuxt-processor-emit',
         async buildStart() {
-          const workerFiles = await collectFiles(resolve(srcDir, 'server/workers'))
+          const workerFiles = await scanFolder(_options.workers)
           if (workerFiles.length === 0) {
             virtualCode = ''
             return

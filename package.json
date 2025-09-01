@@ -43,6 +43,7 @@
   "dependencies": {
     "@nuxt/kit": "^4.0.3",
     "bullmq": "^5.58.2",
+    "fast-glob": "^3.3.3",
     "ioredis": "^5.7.0"
   },
   "devDependencies": {

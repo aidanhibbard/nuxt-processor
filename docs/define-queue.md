@@ -11,7 +11,7 @@ title: Define Queue
 Create `server/queues/index.ts`:
 
 ```ts
-import { defineQueue } from '#workers'
+import { defineQueue } from '#processor'
 
 export default defineQueue({
   name: 'hello',
