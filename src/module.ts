@@ -44,7 +44,7 @@ export default defineNuxtModule<ModuleOptions>({
 import { fileURLToPath } from 'node:url'
 import { resolve as resolvePath } from 'node:path'
 import { consola } from 'consola'
-import { $workers } from '#workers-utils'
+import { $workers } from '#processor-utils'
 
 // Initialize connection as early as possible so any imports that register
 // workers/queues have a valid connection available.
@@ -133,8 +133,8 @@ export default { createWorkersApp }
     // Alias inside the app to the identity API so user imports resolve at build-time
     _nuxt.options.alias = _nuxt.options.alias ?? {}
     _nuxt.options.alias['nuxt-processor'] = resolve('./runtime/server/handlers')
-    _nuxt.options.alias['#workers'] = resolve('./runtime/server/handlers')
-    _nuxt.options.alias['#workers-utils'] = resolve('./runtime/server/utils/workers')
+    _nuxt.options.alias['#processor'] = resolve('./runtime/server/handlers')
+    _nuxt.options.alias['#processor-utils'] = resolve('./runtime/server/utils/workers')
     // Allow swapping BullMQ implementation allowing for bullmq pro (default to 'bullmq')
     if (!_nuxt.options.alias['#bullmq']) {
       _nuxt.options.alias['#bullmq'] = 'bullmq'
