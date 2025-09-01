@@ -1,4 +1,4 @@
-import { defineQueue } from '#workers'
+import { defineQueue } from '#processor'
 
 const queue = defineQueue({
   name: 'hello',

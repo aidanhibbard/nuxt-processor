@@ -1,4 +1,4 @@
-import { defineWorker } from '#workers'
+import { defineWorker } from '#processor'
 import type { Job } from 'bullmq'
 
 export default defineWorker({
