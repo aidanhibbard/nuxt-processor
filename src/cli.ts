@@ -57,7 +57,7 @@ export const main = createMain({
                   const updated = {
                     ...pkg,
                     scripts: {
-                      ...(pkg.scripts || {}),
+                      ...(pkg.scripts ?? {}),
                       'processor:dev': 'nuxt-processor dev',
                     },
                   }
