@@ -1,4 +1,4 @@
-import { defineNuxtModule, createResolver, addTemplate } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addTypeTemplate } from '@nuxt/kit'
 import { name, version, configKey, compatibility } from '../package.json'
 import type { RedisOptions } from 'bullmq'
 import type { Plugin } from 'rollup'
@@ -34,8 +34,6 @@ export default defineNuxtModule<ModuleOptions>({
   },
   async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
-
-    const buildDir = nuxt.options.buildDir
 
     function generateWorkersEntryContent(workerFiles: string[]): string {
       const redisInline = JSON.stringify(_options.redis ?? {})
@@ -141,9 +139,8 @@ export default { createWorkersApp }
     }
 
     // Provide TypeScript declarations for the alias so IDE/type-check recognizes named exports
-    const typesDtsPath = addTemplate({
+    addTypeTemplate({
       filename: 'types/nuxt-processor.d.ts',
-      write: true,
       getContents: () => `
 declare module 'nuxt-processor' {
   export { defineQueue } from '${resolve('./runtime/server/handlers/defineQueue')}'
@@ -163,15 +160,6 @@ declare module '#bullmq' {
   export * from 'bullmq'
 }
 `,
-    }).dst
-
-    nuxt.hooks.hook('prepare:types', (opts) => {
-      // Ensure our generated d.ts is included in the TS config
-      // so "import { defineWorker } from 'nuxt-processor'" type-checks
-      // across IDE and build.
-      // Nuxt merges this into .nuxt/tsconfig.json
-      if (!opts.tsConfig.include) opts.tsConfig.include = []
-      opts.tsConfig.include.push(resolve(buildDir, typesDtsPath))
     })
 
     // Create a Rollup plugin that emits a virtual workers chunk into Nitro's output
@@ -198,7 +186,7 @@ declare module '#bullmq' {
           if (id === VIRTUAL_ID) return VIRTUAL_ID
         },
         load(id: string) {
-          if (id === VIRTUAL_ID) return virtualCode || 'export {}\n'
+          if (id === VIRTUAL_ID) return virtualCode ?? 'export {}\n'
         },
         generateBundle() {
           if (!virtualCode || !entryRefId) return
