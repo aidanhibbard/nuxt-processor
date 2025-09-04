@@ -32,10 +32,10 @@ export default defineNuxtModule<ModuleOptions>({
     },
     workers: 'server/workers',
   },
-  async setup(_options, _nuxt) {
+  async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
-    const buildDir = _nuxt.options.buildDir
+    const buildDir = nuxt.options.buildDir
 
     function generateWorkersEntryContent(workerFiles: string[]): string {
       const redisInline = JSON.stringify(_options.redis ?? {})
@@ -131,13 +131,13 @@ export default { createWorkersApp }
     }
 
     // Alias inside the app to the identity API so user imports resolve at build-time
-    _nuxt.options.alias = _nuxt.options.alias ?? {}
-    _nuxt.options.alias['nuxt-processor'] = resolve('./runtime/server/handlers')
-    _nuxt.options.alias['#processor'] = resolve('./runtime/server/handlers')
-    _nuxt.options.alias['#processor-utils'] = resolve('./runtime/server/utils/workers')
+    nuxt.options.alias = nuxt.options.alias ?? {}
+    nuxt.options.alias['nuxt-processor'] = resolve('./runtime/server/handlers')
+    nuxt.options.alias['#processor'] = resolve('./runtime/server/handlers')
+    nuxt.options.alias['#processor-utils'] = resolve('./runtime/server/utils/workers')
     // Allow swapping BullMQ implementation allowing for bullmq pro (default to 'bullmq')
-    if (!_nuxt.options.alias['#bullmq']) {
-      _nuxt.options.alias['#bullmq'] = 'bullmq'
+    if (!nuxt.options.alias['#bullmq']) {
+      nuxt.options.alias['#bullmq'] = 'bullmq'
     }
 
     // Provide TypeScript declarations for the alias so IDE/type-check recognizes named exports
@@ -165,7 +165,7 @@ declare module '#bullmq' {
 `,
     }).dst
 
-    _nuxt.hooks.hook('prepare:types', (opts) => {
+    nuxt.hooks.hook('prepare:types', (opts) => {
       // Ensure our generated d.ts is included in the TS config
       // so "import { defineWorker } from 'nuxt-processor'" type-checks
       // across IDE and build.
@@ -219,7 +219,7 @@ declare module '#bullmq' {
     }
 
     // Inject our Rollup plugin into Nitro so it emits the workers chunk without a separate build
-    _nuxt.hooks.hook('nitro:config', (nitroConfig) => {
+    nuxt.hooks.hook('nitro:config', (nitroConfig) => {
       nitroConfig.rollupConfig = nitroConfig.rollupConfig ?? {}
       const plugin = createWorkersRollupPlugin()
       const current = nitroConfig.rollupConfig.plugins
