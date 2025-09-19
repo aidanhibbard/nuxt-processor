@@ -5,9 +5,10 @@
 [![License][license-src]][license-href]
 [![Known Vulnerabilities](https://snyk.io/test/github/aidanhibbard/nuxt-processor/badge.svg)](https://snyk.io/test/github/aidanhibbard/nuxt-processor)
 
-Background job processing for Nuxt using BullMQ with a dedicated workers process.
+## Real background job processing for Nuxt
 
-<img width="763" height="321" alt="image" src="https://github.com/user-attachments/assets/f49d79a9-f99a-4612-b3bc-cad724475bf4" />
+<img width="752" height="402" alt="image" src="https://github.com/user-attachments/assets/9190d8e1-8a46-4b49-be5a-20f0a49fc8fe" />
+
 
 Note: This package is under very active development! Please consider creating issues if you run into anything!
 
@@ -18,7 +19,7 @@ Note: This package is under very active development! Please consider creating is
 
 - **Dedicated processing**: Workers run in a separate Node process – no coupling to your web server.
 - **Scalability**: Run multiple worker processes and instances across machines.
-- **Simple DX**: Define queues/workers in `server/queues` and `server/workers` using first-class helpers.
+- **Simple DX**: Define queues/workers using first-class helpers.
 
 ## Sections
 
@@ -54,7 +55,7 @@ export default defineNuxtConfig({
 
 ## Define a queue and enqueue from your app
 
-Create `server/queues/index.ts`:
+Create `server/queues/hello.ts`:
 
 ```ts
 import { defineQueue } from '#processor'
@@ -66,7 +67,7 @@ export default defineQueue({
 
 ## Define a worker
 
-Create `server/workers/index.ts`:
+Create `server/workers/hello.ts`:
 
 ```ts
 import { defineWorker } from '#processor'
