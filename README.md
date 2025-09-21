@@ -5,10 +5,9 @@
 [![License][license-src]][license-href]
 [![Known Vulnerabilities](https://snyk.io/test/github/aidanhibbard/nuxt-processor/badge.svg)](https://snyk.io/test/github/aidanhibbard/nuxt-processor)
 
-## Real background job processing for Nuxt
+## Scalable processing for Nuxt
 
-<img width="752" height="402" alt="image" src="https://github.com/user-attachments/assets/9190d8e1-8a46-4b49-be5a-20f0a49fc8fe" />
-
+<img width="512" height="250" alt="image" src="https://github.com/user-attachments/assets/d238fb33-8373-46ec-b132-85170ab67c80" />
 
 Note: This package is under very active development! Please consider creating issues if you run into anything!
 
