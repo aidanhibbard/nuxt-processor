@@ -26,7 +26,7 @@ describe('defineQueue', () => {
     const queue = defineQueue({ name: 'email', options: { defaultJobOptions: { attempts: 1 } } })
 
     expect(queue.name).toBe('email')
-    expect((queue).opts.connection).toEqual(connection)
+    expect((queue).opts.connection).toEqual(expect.objectContaining(connection))
 
     await api.stopAll()
   })

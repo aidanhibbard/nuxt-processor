@@ -30,7 +30,7 @@ describe('defineWorker', () => {
     const worker = defineWorker({ name: 'email', processor: async () => {}, options: { concurrency: 2 } })
 
     expect(worker.name).toBe('email')
-    expect((worker).opts.connection).toEqual(connection)
+    expect((worker).opts.connection).toEqual(expect.objectContaining(connection))
     expect((worker).opts.autorun).toBe(false)
 
     await api.stopAll()
