@@ -65,7 +65,11 @@ Create `server/queues/hello.ts`:
 ```ts
 import { defineQueue } from '#processor'
 
-export default defineQueue({
+type HelloName = 'hello'
+type HelloData = { message: string, ts: number }
+type HelloResult = { echoed: string, processedAt: number }
+
+export default defineQueue<HelloData, HelloResult, HelloName>({
   name: 'hello',
   options: {},
 })
@@ -77,14 +81,15 @@ Create `server/workers/hello.ts`:
 
 ```ts
 import { defineWorker } from '#processor'
-import type { Job } from '#bullmq'
 
-export default defineWorker({
+type HelloName = 'hello'
+type HelloData = { message: string, ts: number }
+type HelloResult = { echoed: string, processedAt: number }
+
+export default defineWorker<HelloName, HelloData, HelloResult>({
   name: 'hello',
-  async processor(job: Job) {
-    // do work
-    console.log('processed', job.name, job.data)
-    return job.data
+  async processor(job) {
+    return { echoed: job.data.message, processedAt: job.data.ts }
   },
   options: {},
 })
