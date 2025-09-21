@@ -18,9 +18,14 @@ export default defineNuxtConfig({
   modules: ['nuxt-processor'],
   processor: {
     redis: {
+      // Prefer a single URL if available (takes precedence over other fields)
+      // e.g. redis://user:pass@host:6379/0
+      url: process.env.NUXT_REDIS_URL,
       host: process.env.NUXT_REDIS_HOST ?? '127.0.0.1',
       port: Number(process.env.NUXT_REDIS_PORT ?? 6379),
       password: process.env.NUXT_REDIS_PASSWORD ?? '',
+      username: process.env.NUXT_REDIS_USERNAME,
+      db: Number(process.env.NUXT_REDIS_DB ?? 0),
     },
   },
 })
