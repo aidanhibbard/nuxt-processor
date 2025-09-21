@@ -1,13 +1,15 @@
 import { defineNuxtModule, createResolver, addTypeTemplate } from '@nuxt/kit'
 import { name, version, configKey, compatibility } from '../package.json'
-import type { RedisOptions } from 'bullmq'
+import type { RedisOptions as BullRedisOptions } from 'bullmq'
 import type { Plugin } from 'rollup'
 import { relative } from 'node:path'
 import scanFolder from './utils/scan-folder'
 
 // Module options TypeScript interface definition
+type ModuleRedisOptions = BullRedisOptions & { url?: string }
+
 export interface ModuleOptions {
-  redis: RedisOptions
+  redis: ModuleRedisOptions
   /**
    * The folder containing the worker files
    * Scans for {ts,js,mjs}
@@ -29,7 +31,10 @@ export default defineNuxtModule<ModuleOptions>({
       host: process.env.NUXT_REDIS_HOST ?? '127.0.0.1',
       port: Number(process.env.NUXT_REDIS_PORT ?? 6379),
       password: process.env.NUXT_REDIS_PASSWORD ?? '',
-    },
+      username: process.env.NUXT_REDIS_USERNAME ?? undefined, // needs Redis >= 6
+      db: Number(process.env.NUXT_REDIS_DB ?? 0), // Defaults to 0 on ioredis
+      url: process.env.NUXT_REDIS_URL ?? undefined,
+    } as ModuleRedisOptions,
     workers: 'server/workers',
   },
   async setup(_options, nuxt) {

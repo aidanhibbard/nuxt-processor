@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 import { $workers, type Processor } from '../../../src/runtime/server/utils/workers'
 
@@ -32,7 +32,26 @@ vi.mock('bullmq', () => {
   return { Queue: MockQueue, Worker: MockWorker }
 })
 
+const ioredisConnectMock = vi.fn()
+const ioredisConstructorMock = vi.fn()
+
+vi.mock('ioredis', () => {
+  return {
+    default: vi.fn().mockImplementation((...args: unknown[]) => {
+      ioredisConstructorMock(...args)
+      return {
+        connect: ioredisConnectMock,
+      }
+    }),
+  }
+})
+
 describe('$workers registry', () => {
+  beforeEach(() => {
+    ioredisConstructorMock.mockClear()
+    ioredisConnectMock.mockClear()
+  })
+
   it('creates queues and workers with shared connection and autorun=false', async () => {
     const api = $workers()
     const connection = { host: '127.0.0.1', port: 6379 }
@@ -53,5 +72,31 @@ describe('$workers registry', () => {
     await api.stopAll()
     expect((queue).close).toHaveBeenCalled()
     expect((worker).close).toHaveBeenCalled()
+  })
+
+  it('uses IORedis when given a connection url string', async () => {
+    const api = $workers()
+    api.setConnection('redis://user:pass@localhost:6379/0')
+
+    const queue = api.createQueue('q1')
+    const worker = api.createWorker('q1', async () => {})
+
+    expect(ioredisConstructorMock).toHaveBeenCalledTimes(1)
+    expect(ioredisConstructorMock).toHaveBeenCalledWith('redis://user:pass@localhost:6379/0')
+    expect((queue).opts.connection).toBeDefined()
+    expect((worker).opts.connection).toBeDefined()
+  })
+
+  it('uses IORedis when given an object with url property, passing rest as options', async () => {
+    const api = $workers()
+    api.setConnection({ url: 'redis://localhost:6379/0', password: 'secret', db: 1 })
+
+    const queue = api.createQueue('q2')
+    const worker = api.createWorker('q2', async () => {})
+
+    expect(ioredisConstructorMock).toHaveBeenCalledTimes(1)
+    expect(ioredisConstructorMock).toHaveBeenCalledWith('redis://localhost:6379/0', { password: 'secret', db: 1 })
+    expect((queue).opts.connection).toBeDefined()
+    expect((worker).opts.connection).toBeDefined()
   })
 })

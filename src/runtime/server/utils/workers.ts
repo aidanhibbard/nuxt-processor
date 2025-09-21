@@ -1,5 +1,7 @@
 import type { Job, JobsOptions, QueueOptions, WorkerOptions, Processor } from 'bullmq'
 import { Queue, Worker } from 'bullmq'
+import IORedis from 'ioredis'
+import type { RedisOptions as IORedisOptions } from 'ioredis'
 
 interface WorkersRegistry {
   connection: QueueOptions['connection'] | undefined
@@ -14,8 +16,19 @@ const registry: WorkersRegistry = {
 }
 
 export function $workers() {
-  function setConnection(connection: QueueOptions['connection']) {
-    registry.connection = connection
+  type ConnectionInput = QueueOptions['connection'] | (IORedisOptions & { url?: string }) | string
+
+  function setConnection(connection: ConnectionInput) {
+    if (connection && typeof connection === 'object' && 'url' in connection && connection.url) {
+      const { url, ...rest } = connection as { url: string } & IORedisOptions
+      registry.connection = new IORedis(url, rest)
+    }
+    else if (typeof connection === 'string') {
+      registry.connection = new IORedis(connection)
+    }
+    else {
+      registry.connection = connection as QueueOptions['connection']
+    }
   }
 
   function createQueue(name: string, options?: Omit<QueueOptions, 'connection'> & { defaultJobOptions?: JobsOptions }) {
