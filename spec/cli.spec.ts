@@ -17,18 +17,30 @@ vi.mock('node:readline/promises', () => {
   }
 })
 
-// Mock child_process.spawn globally for tests (ESM exports cannot be spied on directly)
+// Mock child_process.spawn globally and capture child + args
 let _spawnCalled = false
+let lastSpawnArgs: unknown[] | undefined
+let lastChild: { killed: boolean, kill: ReturnType<typeof vi.fn>, on: (event: string, cb: (code?: number | null) => void) => void } | undefined
+let childEventHandlers: Record<string, Array<(code?: number | null) => void>> = {}
 vi.mock('node:child_process', () => {
   return {
-    spawn: (..._args: unknown[]) => {
+    spawn: (...args: unknown[]) => {
       _spawnCalled = true
-      const stub: unknown = {
+      lastSpawnArgs = args
+      childEventHandlers = {}
+      lastChild = {
         killed: false,
-        kill: vi.fn(),
-        on: vi.fn(),
+        kill: vi.fn((_signal?: unknown) => {
+          if (lastChild) {
+            lastChild.killed = true
+          }
+        }),
+        on: (event: string, cb: (code?: number | null) => void) => {
+          if (!childEventHandlers[event]) childEventHandlers[event] = []
+          childEventHandlers[event].push(cb)
+        },
       }
-      return stub as never
+      return lastChild as never
     },
   }
 })
@@ -39,6 +51,7 @@ const importCli = async () => await import('../src/cli')
 describe('CLI dev command', () => {
   let tmpDir: string
   let exitSpy: { mockRestore: () => void }
+  let signalHandlers: Record<string, Array<(...args: unknown[]) => void>>
 
   beforeEach(() => {
     tmpDir = mkdtempSync(join(os.tmpdir(), 'nuxt-processor-cli-'))
@@ -48,6 +61,12 @@ describe('CLI dev command', () => {
       .mockImplementation(((code?: number | null) => {
         throw new Error('process.exit(' + (code ?? 0) + ')')
       }) as unknown as (code?: number | null) => never)) as unknown as { mockRestore: () => void }
+    signalHandlers = {}
+    vi.spyOn(process, 'on').mockImplementation(((event: string, listener: (...args: unknown[]) => void) => {
+      if (!signalHandlers[event]) signalHandlers[event] = []
+      signalHandlers[event].push(listener)
+      return process
+    }) as unknown as typeof process.on)
   })
 
   afterEach(() => {
@@ -77,6 +96,9 @@ describe('CLI dev command', () => {
     // Assert: package.json updated
     const pkg = JSON.parse(readFileSync(join(tmpDir, 'package.json'), 'utf8')) as { scripts?: Record<string, string> }
     expect(pkg.scripts && pkg.scripts['processor:dev']).toBe('nuxt-processor dev')
+    // Ensure spawn happened and signal handlers attached
+    expect(_spawnCalled).toBe(true)
+    expect(signalHandlers['SIGINT']?.length).toBeGreaterThan(0)
   })
 
   it('does not prompt when script exists', async () => {
@@ -123,5 +145,48 @@ describe('CLI dev command', () => {
     }
     const pkg2 = JSON.parse(readFileSync(join(tmpDir, 'package.json'), 'utf8')) as { scripts?: Record<string, string> }
     expect(pkg2.scripts && pkg2.scripts['processor:dev']).toBe('nuxt-processor dev')
+  })
+
+  it('kills child process on SIGINT signal', async () => {
+    const entryDir = join(tmpDir, '.nuxt', 'dev', 'workers')
+    mkdirSync(entryDir, { recursive: true })
+    writeFileSync(join(entryDir, 'index.mjs'), 'export {}\n')
+
+    promptAnswer = 'n'
+    const { main } = await importCli()
+    await main({ rawArgs: ['dev', tmpDir, '--nodeArgs', '--inspect=9229 --trace-warnings'] })
+
+    expect(_spawnCalled).toBe(true)
+    expect(typeof lastChild?.kill).toBe('function')
+    // Trigger SIGINT handler
+    const sigint = signalHandlers['SIGINT']?.[0]
+    expect(typeof sigint).toBe('function')
+    if (sigint) {
+      sigint()
+    }
+    expect(lastChild?.kill).toHaveBeenCalled()
+
+    // Ensure spawn args array exists
+    const spawnArgs = lastSpawnArgs as [string, string[], Record<string, unknown>]
+    expect(Array.isArray(spawnArgs[1])).toBe(true)
+  })
+
+  it('exits with child exit code when child process exits', async () => {
+    const entryDir = join(tmpDir, '.nuxt', 'dev', 'workers')
+    mkdirSync(entryDir, { recursive: true })
+    writeFileSync(join(entryDir, 'index.mjs'), 'export {}\n')
+
+    promptAnswer = 'n'
+    const { main } = await importCli()
+    try {
+      await main({ rawArgs: ['dev', tmpDir] })
+      // Simulate child exit event
+      const exitHandlers = childEventHandlers['exit']
+      expect(Array.isArray(exitHandlers) && exitHandlers.length > 0).toBe(true)
+      exitHandlers?.[0]?.(2)
+    }
+    catch (e) {
+      expect(String(e)).toContain('process.exit(2)')
+    }
   })
 })
