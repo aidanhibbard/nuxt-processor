@@ -56,4 +56,19 @@ describe('defineWorker', () => {
     // Worker instance .name is exposed as string by BullMQ; type-level checks are done via job
     await api.stopAll()
   })
+
+  it('works without generics (any types)', async () => {
+    const api = $workers()
+    api.setConnection({ host: 'localhost', port: 6379 })
+
+    const worker = defineWorker({
+      name: 'plain',
+      async processor(job) {
+        return { seen: job.data }
+      },
+    })
+
+    expect(worker.name).toBe('plain')
+    await api.stopAll()
+  })
 })

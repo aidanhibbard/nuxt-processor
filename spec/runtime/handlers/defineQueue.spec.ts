@@ -48,4 +48,14 @@ describe('defineQueue', () => {
 
     await api.stopAll()
   })
+
+  it('works without generics (any types)', async () => {
+    const api = $workers()
+    api.setConnection({ host: 'localhost', port: 6379 })
+
+    const queue = defineQueue({ name: 'plain' })
+    await queue.add('plain', { n: 1 })
+
+    await api.stopAll()
+  })
 })
