@@ -38,6 +38,7 @@
     "release": "npm run lint && npm run prepack && changelogen --release && npm publish && git push --follow-tags",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest watch",
     "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
     "vp:dev": "vitepress dev docs",
@@ -46,9 +47,9 @@
   },
   "dependencies": {
     "@nuxt/kit": "^4.0.3",
+    "bullmq": "^5.58.2",
     "citty": "^0.1.6",
     "consola": "^3.2.3",
-    "bullmq": "^5.58.2",
     "fast-glob": "^3.3.3",
     "ioredis": "^5.7.0",
     "pathe": "^1.1.2"
@@ -61,6 +62,7 @@
     "@nuxt/schema": "^4.0.3",
     "@nuxt/test-utils": "^3.19.2",
     "@types/node": "latest",
+    "@vitest/coverage-v8": "^3.2.4",
     "changelogen": "^0.6.2",
     "eslint": "^9.34.0",
     "happy-dom": "^18.0.1",
