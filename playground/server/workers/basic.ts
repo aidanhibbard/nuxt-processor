@@ -6,5 +6,3 @@ export default defineWorker({
     return { ok: true, received: job.data }
   },
 })
-
-
