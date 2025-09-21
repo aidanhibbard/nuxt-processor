@@ -4,9 +4,11 @@ import IORedis from 'ioredis'
 import type { RedisOptions as IORedisOptions } from 'ioredis'
 
 interface WorkersRegistry {
-  connection: QueueOptions['connection'] | undefined
-  queues: Queue[]
-  workers: Worker[]
+  connection?: QueueOptions['connection']
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  queues: Array<Queue<any, any, any>>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  workers: Array<Worker<any, any, any>>
 }
 
 const registry: WorkersRegistry = {
@@ -34,8 +36,17 @@ export function $workers() {
     }
   }
 
-  function createQueue(name: string, options?: Omit<QueueOptions, 'connection'> & { defaultJobOptions?: JobsOptions }) {
-    const queue = new Queue(name, {
+  function createQueue<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    DataTypeOrJob = any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    DefaultResultType = any,
+    DefaultNameType extends string = string,
+  >(
+    name: DefaultNameType,
+    options?: Omit<QueueOptions, 'connection'> & { defaultJobOptions?: JobsOptions },
+  ): Queue<DataTypeOrJob, DefaultResultType, DefaultNameType> {
+    const queue = new Queue<DataTypeOrJob, DefaultResultType, DefaultNameType>(name, {
       connection: registry.connection as QueueOptions['connection'],
       ...options,
     })
@@ -43,12 +54,18 @@ export function $workers() {
     return queue
   }
 
-  function createWorker(
-    name: string,
-    processor: Processor,
+  function createWorker<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    DataType = any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ResultType = any,
+    NameType extends string = string,
+  >(
+    name: NameType,
+    processor: Processor<DataType, ResultType, NameType>,
     options?: Omit<WorkerOptions, 'connection'>,
-  ) {
-    const worker = new Worker(name, processor, {
+  ): Worker<DataType, ResultType, NameType> {
+    const worker = new Worker<DataType, ResultType, NameType>(name, processor, {
       connection: registry.connection as QueueOptions['connection'],
       ...options,
       autorun: false,

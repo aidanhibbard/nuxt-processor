@@ -101,4 +101,21 @@ describe('$workers registry', () => {
     expect((queue).opts.connection).toBeDefined()
     expect((worker).opts.connection).toBeDefined()
   })
+
+  it('registry can store heterogeneous generic instances safely', async () => {
+    const api = $workers()
+    api.setConnection({ host: '127.0.0.1', port: 6379 })
+
+    const q1 = api.createQueue<'n1'>('n1')
+    const q2 = api.createQueue<{ foo: string }, { bar: number }, 'n2'>('n2')
+    const w1 = api.createWorker<'n1'>('n1', async () => {})
+    const w2 = api.createWorker<{ a: number }, { b: string }, 'n2'>('n2', async job => ({ b: String(job.data.a) }))
+
+    expect(api.queues).toEqual(expect.arrayContaining([q1, q2]))
+    expect(api.workers).toEqual(expect.arrayContaining([w1, w2]))
+
+    // Instance .name is string at runtime; rely on compile-time checks via generics and method args
+
+    await api.stopAll()
+  })
 })

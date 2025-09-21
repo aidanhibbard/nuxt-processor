@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, expectTypeOf } from 'vitest'
 
 import { defineWorker } from '../../../src/runtime/server/handlers/defineWorker'
 import { $workers, type Processor } from '../../../src/runtime/server/utils/workers'
@@ -33,6 +33,42 @@ describe('defineWorker', () => {
     expect((worker).opts.connection).toEqual(expect.objectContaining(connection))
     expect((worker).opts.autorun).toBe(false)
 
+    await api.stopAll()
+  })
+
+  it('supports typed name, data and result through generics', async () => {
+    const api = $workers()
+    api.setConnection({ host: 'localhost', port: 6379 })
+
+    type Name = 'hello'
+    type Data = { x: number }
+    type Result = { y: string }
+
+    const _worker = defineWorker<Name, Data, Result>({
+      name: 'hello',
+      async processor(job) {
+        expectTypeOf(job.name).toEqualTypeOf<Name>()
+        expectTypeOf(job.data).toEqualTypeOf<Data>()
+        return { y: String(job.data.x) }
+      },
+    })
+
+    // Worker instance .name is exposed as string by BullMQ; type-level checks are done via job
+    await api.stopAll()
+  })
+
+  it('works without generics (any types)', async () => {
+    const api = $workers()
+    api.setConnection({ host: 'localhost', port: 6379 })
+
+    const worker = defineWorker({
+      name: 'plain',
+      async processor(job) {
+        return { seen: job.data }
+      },
+    })
+
+    expect(worker.name).toBe('plain')
     await api.stopAll()
   })
 })

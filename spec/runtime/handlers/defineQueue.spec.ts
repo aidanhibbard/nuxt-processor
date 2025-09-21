@@ -12,6 +12,7 @@ vi.mock('bullmq', () => {
       this.opts = opts
     }
 
+    add = vi.fn().mockResolvedValue(undefined)
     close = vi.fn().mockResolvedValue(undefined)
   }
   return { Queue: MockQueue }
@@ -27,6 +28,33 @@ describe('defineQueue', () => {
 
     expect(queue.name).toBe('email')
     expect((queue).opts.connection).toEqual(expect.objectContaining(connection))
+
+    await api.stopAll()
+  })
+
+  it('supports typed name, data and result through generics', async () => {
+    const api = $workers()
+    api.setConnection({ host: 'localhost', port: 6379 })
+
+    type Name = 'hello'
+    type Data = { z: number }
+    type Result = { ok: boolean }
+
+    const queue = defineQueue<Data, Result, Name>({ name: 'hello' })
+
+    // .add signature should be strongly typed
+    await queue.add('hello', { z: 1 })
+    // Type-level checks focus on .add payload/name
+
+    await api.stopAll()
+  })
+
+  it('works without generics (any types)', async () => {
+    const api = $workers()
+    api.setConnection({ host: 'localhost', port: 6379 })
+
+    const queue = defineQueue({ name: 'plain' })
+    await queue.add('plain', { n: 1 })
 
     await api.stopAll()
   })

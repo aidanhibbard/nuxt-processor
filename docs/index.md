@@ -13,6 +13,9 @@ hero:
     - theme: alt
       text: Define a Worker
       link: /define-worker
+    - theme: alt
+      text: Bull Board
+      link: /bull-board
 
 features:
   - title: "🚀 Dedicated processing"
