@@ -3,5 +3,8 @@
   "include": [
     "types/**/*.d.ts",
     "server/**/*.ts"
-  ]
+  ],
+  "compilerOptions": {
+    "strict": true
+  }
 }
