@@ -61,9 +61,11 @@ describe('$workers registry', () => {
     const worker = api.createWorker('test-queue', async () => {}, { concurrency: 3 })
 
     expect(queue.name).toBe('test-queue')
-    expect((queue.opts.connection)).toEqual(connection)
+    expect((queue.opts.connection)).toEqual(expect.objectContaining(connection))
+    expect((queue.opts.connection as unknown as { maxRetriesPerRequest: unknown }).maxRetriesPerRequest).toBeNull()
     expect(worker.name).toBe('test-queue')
-    expect((worker).opts.connection).toEqual(connection)
+    expect((worker).opts.connection).toEqual(expect.objectContaining(connection))
+    expect(((worker).opts.connection as unknown as { maxRetriesPerRequest: unknown }).maxRetriesPerRequest).toBeNull()
     expect((worker).opts.autorun).toBe(false)
 
     expect(api.queues).toContain(queue)
@@ -82,12 +84,12 @@ describe('$workers registry', () => {
     const worker = api.createWorker('q1', async () => {})
 
     expect(ioredisConstructorMock).toHaveBeenCalledTimes(1)
-    expect(ioredisConstructorMock).toHaveBeenCalledWith('redis://user:pass@localhost:6379/0')
+    expect(ioredisConstructorMock).toHaveBeenCalledWith('redis://user:pass@localhost:6379/0', expect.objectContaining({ maxRetriesPerRequest: null }))
     expect((queue).opts.connection).toBeDefined()
     expect((worker).opts.connection).toBeDefined()
   })
 
-  it('uses IORedis when given an object with url property, passing rest as options', async () => {
+  it('uses IORedis when given an object with url property, passing rest as options and setting maxRetriesPerRequest=null', async () => {
     const api = $workers()
     api.setConnection({ url: 'redis://localhost:6379/0', password: 'secret', db: 1 })
 
@@ -95,7 +97,7 @@ describe('$workers registry', () => {
     const worker = api.createWorker('q2', async () => {})
 
     expect(ioredisConstructorMock).toHaveBeenCalledTimes(1)
-    expect(ioredisConstructorMock).toHaveBeenCalledWith('redis://localhost:6379/0', { password: 'secret', db: 1 })
+    expect(ioredisConstructorMock).toHaveBeenCalledWith('redis://localhost:6379/0', expect.objectContaining({ password: 'secret', db: 1, maxRetriesPerRequest: null }))
     expect((queue).opts.connection).toBeDefined()
     expect((worker).opts.connection).toBeDefined()
   })

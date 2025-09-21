@@ -21,13 +21,16 @@ export function $workers() {
   function setConnection(connection: ConnectionInput) {
     if (connection && typeof connection === 'object' && 'url' in connection && connection.url) {
       const { url, ...rest } = connection as { url: string } & IORedisOptions
-      registry.connection = new IORedis(url, rest)
+      const opts: IORedisOptions = { ...rest, maxRetriesPerRequest: null }
+      registry.connection = new IORedis(url, opts)
     }
     else if (typeof connection === 'string') {
-      registry.connection = new IORedis(connection)
+      registry.connection = new IORedis(connection, { maxRetriesPerRequest: null })
     }
     else {
-      registry.connection = connection as QueueOptions['connection']
+      // When passing raw options, ensure BullMQ-required setting
+      const normalized = { ...(connection as IORedisOptions), maxRetriesPerRequest: null } as IORedisOptions
+      registry.connection = normalized as unknown as QueueOptions['connection']
     }
   }
 
