@@ -33,7 +33,7 @@ Note: This package is under very active development! Please consider creating is
 ## Install
 
 ```bash
-npm i -D nuxt-processor
+npx nuxi@latest module add nuxt-processor
 ```
 
 Add the module in `nuxt.config.ts` and set your Redis connection.
