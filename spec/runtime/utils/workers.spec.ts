@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 import { $workers, type Processor } from '../../../src/runtime/server/utils/workers'
 
-vi.mock('bullmq', () => {
+vi.mock('#bullmq', () => {
   class MockQueue {
     name: string
     opts: WorkerOptions

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, expectTypeOf } from 'vitest'
 import { defineWorker } from '../../../src/runtime/server/handlers/defineWorker'
 import { $workers, type Processor } from '../../../src/runtime/server/utils/workers'
 
-vi.mock('bullmq', () => {
+vi.mock('#bullmq', () => {
   class MockWorker {
     name: string
     processor: Processor

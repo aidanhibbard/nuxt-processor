@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { defineQueue } from '../../../src/runtime/server/handlers/defineQueue'
 import { $workers, type QueueOptions } from '../../../src/runtime/server/utils/workers'
 
-vi.mock('bullmq', () => {
+vi.mock('#bullmq', () => {
   class MockQueue {
     name: string
     opts: QueueOptions
