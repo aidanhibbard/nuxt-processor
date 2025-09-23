@@ -44,6 +44,7 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.runtimeConfig = nuxt.options.runtimeConfig ?? {}
     nuxt.options.runtimeConfig.processor = {
       ...(nuxt.options.runtimeConfig.processor ?? {}),
+      // @ts-expect-error - runtimeConfig structure is flexible
       redis: { ...(_options.redis ?? {}) },
     }
 
