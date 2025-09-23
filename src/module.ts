@@ -40,11 +40,13 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
+    const redisInline = JSON.stringify(_options.redis ?? {})
+
     const nitroPlugin = `
     import { $workers } from '#processor-utils'
 
     export default defineNitroPlugin(() => {
-      $workers().setConnection(${JSON.stringify(_options.redis)})
+      $workers().setConnection(${redisInline})
     })
     `
 
@@ -57,7 +59,6 @@ export default defineNuxtModule<ModuleOptions>({
     addServerPlugin(tpl.dst)
 
     function generateWorkersEntryContent(workerFiles: string[]): string {
-      const redisInline = JSON.stringify(_options.redis ?? {})
       const toImportArray = workerFiles.map(id => `() => import(${JSON.stringify(id)})`).join(',\n    ')
       return `
 import { fileURLToPath } from 'node:url'
