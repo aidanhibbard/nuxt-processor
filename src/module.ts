@@ -1,4 +1,4 @@
-import { defineNuxtModule, createResolver, addTypeTemplate } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addTypeTemplate, addServerPlugin, addTemplate } from '@nuxt/kit'
 import { name, version, configKey, compatibility } from '../package.json'
 import type { RedisOptions as BullRedisOptions } from 'bullmq'
 import type { Plugin } from 'rollup'
@@ -39,6 +39,32 @@ export default defineNuxtModule<ModuleOptions>({
   },
   async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
+
+    // Expose redis options in runtimeConfig for server-side initialization
+    nuxt.options.runtimeConfig = nuxt.options.runtimeConfig ?? {}
+    nuxt.options.runtimeConfig.processor = {
+      ...(nuxt.options.runtimeConfig.processor ?? {}),
+      redis: { ...(_options.redis ?? {}) },
+    }
+
+    // Auto-initialize $workers connection on the Nitro side
+    addTemplate({
+      filename: '0.processor-nuxt-plugin.ts',
+      getContents: () => `
+import { defineNitroPlugin } from 'nitropack'
+import { useRuntimeConfig } from '#imports'
+import { $workers } from '#processor-utils'
+
+export default defineNitroPlugin(() => {
+  const cfg = (typeof useRuntimeConfig === 'function' ? useRuntimeConfig() : {})
+  const redis = cfg?.processor?.redis ?? ${JSON.stringify(_options.redis)}
+  if (redis && Object.keys(redis).length > 0) {
+    $workers().setConnection(redis)
+  }
+})
+    `,
+    })
+    addServerPlugin(resolve(nuxt.options.rootDir, '0.processor-nuxt-plugin'))
 
     function generateWorkersEntryContent(workerFiles: string[]): string {
       const redisInline = JSON.stringify(_options.redis ?? {})
