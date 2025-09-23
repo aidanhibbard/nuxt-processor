@@ -47,12 +47,14 @@
   },
   "dependencies": {
     "@nuxt/kit": "^4.0.3",
-    "bullmq": "^5.58.2",
     "citty": "^0.1.6",
     "consola": "^3.2.3",
     "fast-glob": "^3.3.3",
     "ioredis": "^5.7.0",
     "pathe": "^1.1.2"
+  },
+  "peerDependencies": {
+    "bullmq": "^5.58.2"
   },
   "devDependencies": {
     "@nuxt/devtools": "^2.6.3",

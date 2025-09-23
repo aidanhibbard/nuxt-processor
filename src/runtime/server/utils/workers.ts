@@ -1,5 +1,5 @@
-import type { Job, JobsOptions, QueueOptions, WorkerOptions, Processor } from 'bullmq'
-import { Queue, Worker } from 'bullmq'
+import type { Job, JobsOptions, QueueOptions, WorkerOptions, Processor } from '#bullmq'
+import { Queue, Worker } from '#bullmq'
 import IORedis from 'ioredis'
 import type { RedisOptions as IORedisOptions } from 'ioredis'
 
