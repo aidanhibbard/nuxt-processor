@@ -1,4 +1,16 @@
 
+## v0.0.9
+
+[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v0.0.8...v0.0.9)
+
+### 🩹 Fixes
+
+- Playground/package.json & playground/package-lock.json to reduce vulnerabilities ([6575378](https://github.com/aidanhibbard/nuxt-processor/commit/6575378))
+
+### ❤️ Contributors
+
+- Snyk-bot <snyk-bot@snyk.io>
+
 ## v0.0.8
 
 [compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v0.0.7...v0.0.8)
