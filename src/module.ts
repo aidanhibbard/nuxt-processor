@@ -1,4 +1,4 @@
-import { defineNuxtModule, createResolver, addTypeTemplate } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addTypeTemplate, addTemplate, addServerPlugin } from '@nuxt/kit'
 import { name, version, configKey, compatibility } from '../package.json'
 import type { RedisOptions as BullRedisOptions } from 'bullmq'
 import type { Plugin } from 'rollup'
@@ -39,6 +39,22 @@ export default defineNuxtModule<ModuleOptions>({
   },
   async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
+
+    const nitroPlugin = `
+    import { $workers } from '#processor-utils'
+
+    export default defineNitroPlugin(() => {
+      $workers().setConnection(${JSON.stringify(_options.redis)})
+    })
+    `
+
+    const tpl = addTemplate({
+      filename: '0.processor-nuxt-plugin.ts',
+      write: true,
+      getContents: () => nitroPlugin,
+    })
+
+    addServerPlugin(tpl.dst)
 
     function generateWorkersEntryContent(workerFiles: string[]): string {
       const redisInline = JSON.stringify(_options.redis ?? {})
