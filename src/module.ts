@@ -1,10 +1,10 @@
-import { defineNuxtModule, createResolver, addTypeTemplate, addTemplate, addServerPlugin } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addTypeTemplate } from '@nuxt/kit'
 import { name, version, configKey, compatibility } from '../package.json'
 import type { RedisOptions as BullRedisOptions } from 'bullmq'
 import type { Plugin } from 'rollup'
 import { relative } from 'node:path'
 import scanFolder from './utils/scan-folder'
-import { $workers } from '#processor-utils'
+import { $workers } from './runtime/server/utils/workers'
 
 // Module options TypeScript interface definition
 type ModuleRedisOptions = BullRedisOptions & { url?: string }
