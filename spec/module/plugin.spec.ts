@@ -6,17 +6,17 @@ const addServerPluginMock = vi.fn()
 const addTypeTemplateMock = vi.fn()
 const createResolverMock = vi.fn(() => ({ resolve: (...p: string[]) => p.filter(Boolean).join('/') }))
 
-vi.mock('@nuxt/kit', async () => {
-  const actual = await vi.importActual<any>('@nuxt/kit')
+vi.mock('@nuxt/kit', () => {
+  const actual = {} as typeof import('@nuxt/kit')
   return {
     ...actual,
-    addTemplate: (...args: unknown[]) => addTemplateMock(...args),
-    addServerPlugin: (...args: unknown[]) => addServerPluginMock(...args),
-    addTypeTemplate: (...args: unknown[]) => addTypeTemplateMock(...args),
-    createResolver: (...args: unknown[]) => createResolverMock(...args),
+    addTemplate: (arg: unknown) => addTemplateMock(arg as unknown),
+    addServerPlugin: (arg: unknown) => addServerPluginMock(arg as unknown),
+    addTypeTemplate: (arg: unknown) => addTypeTemplateMock(arg as unknown),
+    createResolver: () => createResolverMock(),
     // Bypass Nuxt version checks by stubbing defineNuxtModule to directly call setup
-    defineNuxtModule: (opts: any) => {
-      return async (modOptions: any, nuxt: any) => {
+    defineNuxtModule: (opts: { defaults?: unknown, setup?: (o: unknown, n: unknown) => unknown }) => {
+      return async (modOptions: unknown, nuxt: unknown) => {
         const provided = modOptions ?? opts?.defaults ?? {}
         if (typeof opts?.setup === 'function') {
           await opts.setup(provided, nuxt)
@@ -30,6 +30,7 @@ vi.mock('@nuxt/kit', async () => {
 vi.mock('../../src/runtime/server/utils/workers', () => ({ $workers: vi.fn() }))
 
 // Import after mocks
+// eslint-disable-next-line import/first
 import NuxtProcessorModule from '../../src/module'
 
 describe('nuxt-processor: server plugin generation', () => {
@@ -40,7 +41,7 @@ describe('nuxt-processor: server plugin generation', () => {
   })
 
   it('writes runtimeConfig, emits server plugin and registers it from buildDir', async () => {
-    const nuxt: any = {
+    const nuxt: { options: { buildDir: string, alias: Record<string, string>, runtimeConfig: Record<string, unknown> }, hooks: { hook: ReturnType<typeof vi.fn> } } = {
       options: {
         buildDir: '/tmp/.nuxt',
         alias: {},
@@ -49,15 +50,16 @@ describe('nuxt-processor: server plugin generation', () => {
       hooks: { hook: vi.fn() },
     }
 
-    const moduleOptions = {
+    const moduleOptions: { redis: { url: string, db: number }, workers: string } = {
       redis: { url: 'redis://example:6379/0', db: 0 },
       workers: 'server/workers',
     }
 
-    await (NuxtProcessorModule as any)(moduleOptions as any, nuxt)
+    await (NuxtProcessorModule as unknown as (o: unknown, n: unknown) => Promise<void>)(moduleOptions, nuxt)
 
     // runtimeConfig is populated
-    expect(nuxt.options.runtimeConfig.processor.redis).toEqual(
+    type RC = { processor: { redis: Record<string, unknown> } }
+    expect((nuxt.options.runtimeConfig as RC).processor.redis).toEqual(
       expect.objectContaining({ url: 'redis://example:6379/0', db: 0 }),
     )
 
@@ -77,5 +79,3 @@ describe('nuxt-processor: server plugin generation', () => {
     expect(addServerPluginMock).toHaveBeenCalledWith('0.processor-nuxt-plugin')
   })
 })
-
-
