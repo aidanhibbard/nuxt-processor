@@ -9,7 +9,6 @@ const queue = defineQueue<HelloData, HelloResult, HelloName>({
 })
 
 setInterval(async () => {
-  console.log('adding job to hello queue')
   await queue.add('hello', { message: 'hello', ts: Date.now() })
 }, 5000)
 
