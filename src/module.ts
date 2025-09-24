@@ -43,6 +43,7 @@ export default defineNuxtModule<ModuleOptions>({
     const redisInline = JSON.stringify(_options.redis ?? {})
 
     const nitroPlugin = `
+    import { defineNitroPlugin } from '#imports'
     import { $workers } from '#processor-utils'
 
     export default defineNitroPlugin(() => {
