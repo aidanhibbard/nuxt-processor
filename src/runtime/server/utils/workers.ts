@@ -87,6 +87,7 @@ export function $workers() {
     stopAll,
     get queues() { return registry.queues },
     get workers() { return registry.workers },
+    get connection() { return registry.connection },
   }
 }
 

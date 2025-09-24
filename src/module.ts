@@ -41,9 +41,6 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
-    const { setConnection } = $workers()
-    setConnection(_options.redis)
-
     function generateWorkersEntryContent(workerFiles: string[]): string {
       const toImportArray = workerFiles.map(id => `() => import(${JSON.stringify(id)})`).join(',\n    ')
       return `
