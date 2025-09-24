@@ -8,8 +8,6 @@ const queue = defineQueue<HelloData, HelloResult, HelloName>({
   name: 'hello',
 })
 
-await queue.add('hello', { message: 'hello', ts: Date.now() })
-
 setInterval(async () => {
   await queue.add('hello', { message: 'hello', ts: Date.now() })
 }, 5000)

@@ -2,8 +2,6 @@ import { defineQueue } from '#processor'
 
 const queue = defineQueue({ name: 'basic' })
 
-await queue.add('basic', { now: Date.now() })
-
 setInterval(async () => {
   await queue.add('basic', { now: Date.now() })
 }, 10000)
