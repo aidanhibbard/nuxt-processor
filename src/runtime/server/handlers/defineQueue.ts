@@ -14,7 +14,6 @@ export function defineQueue<
   DefaultNameType extends string = string,
 >({ name, options }: DefineQueueArgs<DefaultNameType>): Queue<DataTypeOrJob, DefaultResultType, DefaultNameType> {
   const { createQueue } = $workers()
-  console.log('registry.connection', $workers().connection)
   return createQueue<DataTypeOrJob, DefaultResultType, DefaultNameType>(name, options)
 }
 

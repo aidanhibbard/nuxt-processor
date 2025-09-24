@@ -50,7 +50,6 @@ export function $workers() {
       connection: registry.connection as QueueOptions['connection'],
       ...options,
     })
-    console.log('registry.connection', registry.connection)
     registry.queues.push(queue)
     return queue
   }
