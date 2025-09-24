@@ -1,10 +1,9 @@
-import { defineNuxtModule, createResolver, addTypeTemplate } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addTypeTemplate, addServerPlugin, addTemplate } from '@nuxt/kit'
 import { name, version, configKey, compatibility } from '../package.json'
 import type { RedisOptions as BullRedisOptions } from 'bullmq'
 import type { Plugin } from 'rollup'
 import { relative } from 'node:path'
 import scanFolder from './utils/scan-folder'
-import { $workers } from './runtime/server/utils/workers'
 
 // Module options TypeScript interface definition
 type ModuleRedisOptions = BullRedisOptions & { url?: string }
@@ -41,8 +40,24 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
-    const { setConnection } = $workers()
-    setConnection(_options.redis)
+    const redisInline = JSON.stringify(_options.redis ?? {})
+
+    const nitroPlugin = `
+    import { defineNitroPlugin } from '#imports'
+    import { $workers } from '#processor-utils'
+
+    export default defineNitroPlugin(() => {
+      $workers().setConnection(${redisInline})
+    })
+    `
+
+    const tpl = addTemplate({
+      filename: '0.processor-nuxt-plugin.ts',
+      write: true,
+      getContents: () => nitroPlugin,
+    })
+
+    addServerPlugin(tpl.dst)
 
     function generateWorkersEntryContent(workerFiles: string[]): string {
       const toImportArray = workerFiles.map(id => `() => import(${JSON.stringify(id)})`).join(',\n    ')
@@ -55,7 +70,7 @@ import { $workers } from '#processor-utils'
 // Initialize connection as early as possible so any imports that register
 // workers/queues have a valid connection available.
 const api = $workers()
-api.setConnection(${JSON.stringify(_options.redis ?? {})})
+api.setConnection(${redisInline})
 
 export async function createWorkersApp() {
   // Avoid EPIPE when stdout/stderr are closed by terminal (e.g., Ctrl+C piping)
