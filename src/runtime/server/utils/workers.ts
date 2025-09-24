@@ -34,6 +34,7 @@ export function $workers() {
       const normalized = { ...(connection as IORedisOptions), maxRetriesPerRequest: null } as IORedisOptions
       registry.connection = normalized as unknown as QueueOptions['connection']
     }
+    console.log('registry.connection', registry.connection)
   }
 
   function createQueue<
