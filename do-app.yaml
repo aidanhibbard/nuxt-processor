@@ -1,0 +1,58 @@
+name: nuxt-processor
+region: nyc
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+
+features:
+  - buildpack-stack=ubuntu-22
+
+databases:
+  - name: db-valkey-nyc3-90244
+    cluster_name: db-valkey-nyc3-90244
+    engine: VALKEY
+    version: "8"
+    production: true
+
+# Available to both build and runtime so the module can pick up defaults
+envs:
+  - key: NUXT_REDIS_URL
+    scope: RUN_AND_BUILD_TIME
+
+ingress:
+  rules:
+    - component:
+        name: web
+      match:
+        path:
+          prefix: /
+
+services:
+  - name: web
+    environment_slug: node-js
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    github:
+      repo: aidanhibbard/nuxt-processor
+      branch: staging
+      deploy_on_push: true
+    # Build at repo root so module deps (e.g. @nuxt/kit) are installed
+    source_dir: .
+    build_command: npm ci --no-audit --fund=false && npm run dev:build
+    run_command: node playground/.output/server/index.mjs
+
+workers:
+  - name: processor
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    github:
+      repo: aidanhibbard/nuxt-processor
+      branch: staging
+      deploy_on_push: true
+    # Build once at root for the worker too
+    source_dir: .
+    build_command: npm ci --no-audit --fund=false && npm run dev:build
+    run_command: node playground/.output/server/workers/index.mjs
