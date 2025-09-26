@@ -20,6 +20,14 @@ Note: This package is under very active development! Please consider creating is
 - **Scalability**: Run multiple worker processes and instances across machines.
 - **Simple DX**: Define queues/workers using first-class helpers.
 
+## Used by
+
+<div>
+  <a href="https://www.linkedin.com/company/art-of-x/" target="_blank" rel="noreferrer">
+    <img src="https://media.licdn.com/dms/image/v2/D4E0BAQHVikNwxbC1Pw/company-logo_200_200/company-logo_200_200/0/1723062810583/art_of_x_logo?e=1761782400&v=beta&t=I2Ibmp_js9eKm1tAQwHHE4u9QBB97DML0FfKX7ZAbHs" alt="Art of X" height="72" />
+  </a>
+</div>
+
 ## Sections
 
 - [Install](#install)
