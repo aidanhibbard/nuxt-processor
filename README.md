@@ -52,6 +52,15 @@ export default defineNuxtConfig({
       password: process.env.NUXT_REDIS_PASSWORD ?? '',
       username: process.env.NUXT_REDIS_USERNAME,
       db: Number(process.env.NUXT_REDIS_DB ?? 0),
+      // Optional connection behavior
+      // Delay connecting until first Redis command (useful to avoid build-time connects)
+      lazyConnect: process.env.NUXT_REDIS_LAZY_CONNECT
+        ? process.env.NUXT_REDIS_LAZY_CONNECT === 'true'
+        : undefined,
+      // Milliseconds to wait before giving up when establishing the connection
+      connectTimeout: process.env.NUXT_REDIS_CONNECT_TIMEOUT
+        ? Number(process.env.NUXT_REDIS_CONNECT_TIMEOUT)
+        : undefined,
     },
   },
 })

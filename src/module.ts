@@ -33,6 +33,8 @@ export default defineNuxtModule<ModuleOptions>({
       password: process.env.NUXT_REDIS_PASSWORD ?? '',
       username: process.env.NUXT_REDIS_USERNAME ?? undefined, // needs Redis >= 6
       db: Number(process.env.NUXT_REDIS_DB ?? 0), // Defaults to 0 on ioredis
+      lazyConnect: process.env.NUXT_REDIS_LAZY_CONNECT === 'true' ? true : undefined,
+      connectTimeout: process.env.NUXT_REDIS_CONNECT_TIMEOUT ? Number(process.env.NUXT_REDIS_CONNECT_TIMEOUT) : undefined,
       url: process.env.NUXT_REDIS_URL ?? undefined,
     } as ModuleRedisOptions,
     workers: 'server/workers',
