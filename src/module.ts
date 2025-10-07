@@ -16,6 +16,12 @@ export interface ModuleOptions {
    * @default 'server/workers'
    */
   workers: string
+
+  /**
+   * Split workers into separate chunks
+   * @default false
+   */
+  splitWorkers?: boolean
 }
 
 export default defineNuxtModule<ModuleOptions>({
@@ -38,6 +44,7 @@ export default defineNuxtModule<ModuleOptions>({
       url: process.env.NUXT_REDIS_URL ?? undefined,
     } as ModuleRedisOptions,
     workers: 'server/workers',
+    splitWorkers: false,
   },
   async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
@@ -190,8 +197,24 @@ declare module '#bullmq' {
     // Create a Rollup plugin that emits a virtual workers chunk into Nitro's output
     function createWorkersRollupPlugin(): Plugin {
       const VIRTUAL_ID = '\u0000nuxt-processor-entry'
+      const VIRTUAL_SINGLE_PREFIX = '\u0000nuxt-processor-entry-single:'
       let virtualCode = ''
       let entryRefId: string | null = null
+      const perWorkerVirtual: Record<string, string> = {}
+      const perWorkerRefIds: Record<string, string> = {}
+
+      const rootDir = nuxt.options.rootDir || process.cwd()
+      const workersRootAbs = resolve(rootDir, _options.workers)
+
+      const slugify = (abs: string) => {
+        const rel = relative(workersRootAbs, abs).replace(/\\/g, '/')
+        return rel
+          .replace(/\.(mjs|cjs|ts|js)$/i, '')
+          .replace(/[^\w/-]/g, '')
+          .replace(/\/+/g, '-')
+          .replace(/^-+/, '')
+      }
+
       return {
         name: 'nuxt-processor-emit',
         async buildStart() {
@@ -203,30 +226,67 @@ declare module '#bullmq' {
           virtualCode = generateWorkersEntryContent(workerFiles)
           for (const id of workerFiles) {
             this.addWatchFile(id)
+            if (_options.splitWorkers) {
+            // emits wach worker as a separate chunk
+              const vid = VIRTUAL_SINGLE_PREFIX + id
+              perWorkerVirtual[vid] = generateWorkersEntryContent([id])
+              perWorkerRefIds[vid] = this.emitFile({ type: 'chunk', id: vid, fileName: `workers/_single-entry-${slugify(id)}.mjs` })
+            }
           }
           // Emit the virtual workers entry as its own chunk early in the build
           entryRefId = this.emitFile({ type: 'chunk', id: VIRTUAL_ID, fileName: 'workers/_entry.mjs' })
         },
         resolveId(id: string) {
           if (id === VIRTUAL_ID) return VIRTUAL_ID
+          if (_options.splitWorkers && id.startsWith(VIRTUAL_SINGLE_PREFIX)) return id
         },
         load(id: string) {
           if (id === VIRTUAL_ID) return virtualCode ?? 'export {}\n'
+          if (_options.splitWorkers && id.startsWith(VIRTUAL_SINGLE_PREFIX)) return perWorkerVirtual[id] ?? 'export {}\n'
         },
         generateBundle() {
-          if (!virtualCode || !entryRefId) return
-          const entryFile = this.getFileName(entryRefId)
-          const fromDir = 'workers'
-          const rel = './' + relative(fromDir, entryFile).split('\\').join('/')
-          const wrapper = `import { createWorkersApp } from '${rel}'\n`
-            + `import { consola } from 'consola'\n`
-            + `const logger = consola.create({}).withTag('nuxt-processor')\n`
-            + `const appPromise = createWorkersApp().catch((err) => { logger.error('failed to start workers', err); process.exit(1) })\n`
-            + `let shuttingDown = false\n`
-            + `const shutdown = async (signal) => { if (shuttingDown) return; shuttingDown = true; try { logger.info('closing workers' + (signal ? ' ('+signal+')' : '') + '...') } catch (e) { console.warn('nuxt-processor: failed to log shutdown start', e) } ; try { const app = await appPromise; try { const names = (app?.workers || []).map(w => w && w.name).filter(Boolean); logger.info('closing workers:\\n' + names.map(n => ' - ' + n).join('\\n')) } catch (eL) { console.warn('nuxt-processor: failed to log workers list on shutdown', eL) } await app.stop(); try { logger.success('workers closed') } catch (e2) { console.warn('nuxt-processor: failed to log shutdown complete', e2) } } catch (err) { try { logger.error('shutdown error', err) } catch (e3) { console.warn('nuxt-processor: failed to log shutdown error', e3) } } finally { setTimeout(() => process.exit(0), 0) } }\n`
-            + `[ 'SIGINT','SIGTERM','SIGQUIT' ].forEach(sig => process.on(sig, () => shutdown(sig)))\n`
-            + `process.on('beforeExit', () => shutdown('beforeExit'))\n`
-          this.emitFile({ type: 'asset', fileName: 'workers/index.mjs', source: wrapper })
+          // nothing to emit if no workers
+          if (!entryRefId && Object.keys(perWorkerRefIds).length === 0) return
+
+          // Combined
+          if (virtualCode && entryRefId) {
+            const entryFile = this.getFileName(entryRefId)
+            const fromDir = 'workers'
+            const rel = './' + relative(fromDir, entryFile).split('\\').join('/')
+            const wrapper = `import { createWorkersApp } from '${rel}'\n`
+              + `import { consola } from 'consola'\n`
+              + `const logger = consola.create({}).withTag('nuxt-processor')\n`
+              + `const appPromise = createWorkersApp().catch((err) => { logger.error('failed to start workers', err); process.exit(1) })\n`
+              + `let shuttingDown = false\n`
+              + `const shutdown = async (signal) => { if (shuttingDown) return; shuttingDown = true; try { logger.info('closing workers' + (signal ? ' ('+signal+')' : '') + '...') } catch (e) { console.warn('nuxt-processor: failed to log shutdown start', e) } ; try { const app = await appPromise; try { const names = (app?.workers || []).map(w => w && w.name).filter(Boolean); logger.info('closing workers:\\n' + names.map(n => ' - ' + n).join('\\n')) } catch (eL) { console.warn('nuxt-processor: failed to log workers list on shutdown', eL) } await app.stop(); try { logger.success('workers closed') } catch (e2) { console.warn('nuxt-processor: failed to log shutdown complete', e2) } } catch (err) { try { logger.error('shutdown error', err) } catch (e3) { console.warn('nuxt-processor: failed to log shutdown error', e3) } } finally { setTimeout(() => process.exit(0), 0) } }\n`
+              + `[ 'SIGINT','SIGTERM','SIGQUIT' ].forEach(sig => process.on(sig, () => shutdown(sig)))\n`
+              + `process.on('beforeExit', () => shutdown('beforeExit'))\n`
+            this.emitFile({ type: 'asset', fileName: 'workers/index.mjs', source: wrapper })
+          }
+
+          // Per worker
+          if (_options.splitWorkers) {
+            for (const [vid, refId] of Object.entries(perWorkerRefIds)) {
+              const entryFile = this.getFileName(refId)
+              const fromDir = 'workers'
+              const rel = './' + relative(fromDir, entryFile).split('\\').join('/')
+              const slug = entryFile.replace(/^workers\/_single-entry-/, '').replace(/\.mjs$/, '')
+              const wrapper
+                = `import { createWorkersApp } from '${rel}'\n`
+                  + `import { consola } from 'consola'\n`
+                  + `const logger = consola.create({}).withTag('nuxt-processor:${slug}')\n`
+                  + `const appPromise = createWorkersApp().catch((err) => { logger.error('failed to start worker', err); process.exit(1) })\n`
+                  + `let shuttingDown = false\n`
+                  + `const shutdown = async (signal) => { if (shuttingDown) return; shuttingDown = true; try { logger.info('closing worker' + (signal ? ' ('+signal+')' : '') + '...') } catch (e) { console.warn('nuxt-processor: failed to log shutdown start', e) } ; try { const app = await appPromise; try { const names = (app?.workers || []).map(w => w && w.name).filter(Boolean); logger.info('closing worker:\\n' + names.map(n => ' - ' + n).join('\\n')) } catch (eL) { console.warn('nuxt-processor: failed to log workers list on shutdown', eL) } await app.stop(); try { logger.success('worker closed') } catch (e2) { console.warn('nuxt-processor: failed to log shutdown complete', e2) } } catch (err) { try { logger.error('shutdown error', err) } catch (e3) { console.warn('nuxt-processor: failed to log shutdown error', e3) } } finally { setTimeout(() => process.exit(0), 0) } }\n`
+                  + `[ 'SIGINT','SIGTERM','SIGQUIT' ].forEach(sig => process.on(sig, () => shutdown(sig)))\n`
+                  + `process.on('beforeExit', () => shutdown('beforeExit'))\n`
+              this.emitFile({
+                type: 'asset',
+                fileName: `workers/single-${slug}.mjs`,
+                source: wrapper,
+              })
+            }
+          }
         },
       }
     }
