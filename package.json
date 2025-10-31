@@ -52,7 +52,7 @@
     "citty": "^0.1.6",
     "consola": "^3.2.3",
     "fast-glob": "^3.3.3",
-    "ioredis": "^5.7.0",
+    "ioredis": "^5.8.1",
     "pathe": "^1.1.2"
   },
   "devDependencies": {
