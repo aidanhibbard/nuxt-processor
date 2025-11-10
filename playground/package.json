@@ -8,7 +8,7 @@
     "generate": "nuxi generate"
   },
   "dependencies": {
-    "@bull-board/api": "^6.12.6",
+    "@bull-board/api": "^6.13.1",
     "@bull-board/h3": "^6.12.6",
     "@bull-board/ui": "^6.12.6",
     "nuxt": "^4.1.0"
