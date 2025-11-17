@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@bull-board/api": "^6.12.6",
-    "@bull-board/h3": "^6.12.6",
+    "@bull-board/h3": "^6.14.0",
     "@bull-board/ui": "^6.13.1",
     "nuxt": "^4.1.0"
   },
