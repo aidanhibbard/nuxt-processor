@@ -1,4 +1,24 @@
 
+## v0.0.13
+
+[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v0.0.12...v0.0.13)
+
+### 🩹 Fixes
+
+- Upgrade bullmq from 5.58.7 to 5.58.9 ([9d95b8f](https://github.com/aidanhibbard/nuxt-processor/commit/9d95b8f))
+- Upgrade @nuxt/kit from 4.1.2 to 4.1.3 ([d0785f8](https://github.com/aidanhibbard/nuxt-processor/commit/d0785f8))
+- Upgrade ioredis from 5.8.0 to 5.8.1 ([330bc8e](https://github.com/aidanhibbard/nuxt-processor/commit/330bc8e))
+- Upgrade @bull-board/ui from 6.13.0 to 6.13.1 ([fd25999](https://github.com/aidanhibbard/nuxt-processor/commit/fd25999))
+- Upgrade ioredis from 5.8.1 to 5.8.2 ([356d4d8](https://github.com/aidanhibbard/nuxt-processor/commit/356d4d8))
+- Upgrade @bull-board/ui from 6.13.1 to 6.14.0 ([d6cadb0](https://github.com/aidanhibbard/nuxt-processor/commit/d6cadb0))
+- Upgrade @nuxt/kit from 4.1.3 to 4.2.0 ([64206e1](https://github.com/aidanhibbard/nuxt-processor/commit/64206e1))
+- Upgrade bullmq from 5.58.9 to 5.63.0 ([39342b6](https://github.com/aidanhibbard/nuxt-processor/commit/39342b6))
+- Upgrade @bull-board/ui from 6.14.0 to 6.14.2 ([44389bb](https://github.com/aidanhibbard/nuxt-processor/commit/44389bb))
+
+### ❤️ Contributors
+
+- Snyk-bot <snyk-bot@snyk.io>
+
 ## v0.0.12
 
 [compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v0.0.11...v0.0.12)
