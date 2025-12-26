@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@nuxt/kit": "^4.2.0",
-    "bullmq": "^5.63.0",
+    "bullmq": "^5.65.1",
     "citty": "^0.1.6",
     "consola": "^3.2.3",
     "fast-glob": "^3.3.3",
