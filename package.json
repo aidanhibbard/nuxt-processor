@@ -46,7 +46,7 @@
     "vp:preview": "vitepress preview docs"
   },
   "dependencies": {
-    "@nuxt/kit": "^4.2.0",
+    "@nuxt/kit": "^4.2.2",
     "bullmq": "^5.63.0",
     "citty": "^0.1.6",
     "consola": "^3.2.3",
