@@ -11,7 +11,7 @@
     "@bull-board/api": "^6.12.6",
     "@bull-board/h3": "^6.12.6",
     "@bull-board/ui": "^6.15.0",
-    "nuxt": "^4.1.0"
+    "nuxt": "^4.2.2"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.53.3"
