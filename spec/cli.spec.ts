@@ -189,4 +189,23 @@ describe('CLI dev command', () => {
       expect(String(e)).toContain('process.exit(2)')
     }
   })
+
+  it('forwards --workers flag to spawned script', async () => {
+    const entryDir = join(tmpDir, '.nuxt', 'dev', 'workers')
+    mkdirSync(entryDir, { recursive: true })
+    writeFileSync(join(entryDir, 'index.mjs'), 'export {}\n')
+    const pkgPath = join(tmpDir, 'package.json')
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { scripts?: Record<string, string> }
+    pkg.scripts = { ...(pkg.scripts || {}), 'processor:dev': 'nuxt-processor dev' }
+    writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
+
+    promptAnswer = 'n'
+    const { main } = await importCli()
+    await main({ rawArgs: ['dev', tmpDir, '--workers', 'basic,hello'] })
+
+    expect(_spawnCalled).toBe(true)
+    const spawnArgs = lastSpawnArgs as [string, string[], Record<string, unknown>]
+    const nodeArgs = spawnArgs[1]
+    expect(nodeArgs).toContain('--workers=basic,hello')
+  })
 })

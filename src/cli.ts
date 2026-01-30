@@ -30,6 +30,10 @@ export const main = createMain({
           type: 'string',
           description: 'Extra Node args (e.g. --inspect)',
         },
+        workers: {
+          type: 'string',
+          description: 'Comma-separated list of workers to run (default: all)',
+        },
       },
       async run({ args }) {
         const dirArg = typeof args.dir === 'string' ? args.dir : '.'
@@ -133,6 +137,7 @@ export const main = createMain({
           '--watch-path',
           watchDir,
           indexFile,
+          ...(args.workers ? [`--workers=${args.workers}`] : []),
         ]
 
         consola.info(`Running watcher for processor`)
