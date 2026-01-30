@@ -80,10 +80,10 @@ nuxi dev
 node .nuxt/dev/workers/index.mjs
 ```
 
-By default all workers run. To run only specific workers, pass the `--workers` flag with a comma-separated list of worker names:
+By default all workers run. To run only specific workers, use the `--workers=` flag with a comma-separated list of worker names:
 
 ```bash
-node .nuxt/dev/workers/index.mjs --workers basic,hello
+node .nuxt/dev/workers/index.mjs --workers=basic,hello
 ```
 
 ### CLI
@@ -95,7 +95,7 @@ Use the CLI to run workers with file watching and restarts:
 npx nuxt-processor dev
 
 # run only specific workers
-npx nuxt-processor dev --workers basic,hello
+npx nuxt-processor dev --workers=basic,hello
 ```
 
 Notes:
@@ -126,7 +126,7 @@ node .output/server/workers/index.mjs
 To run only specific workers in production:
 
 ```bash
-node .output/server/workers/index.mjs --workers basic,hello
+node .output/server/workers/index.mjs --workers=basic,hello
 ```
 
 ## Bull Board
