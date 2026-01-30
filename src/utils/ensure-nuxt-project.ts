@@ -11,6 +11,6 @@ export default async (args: { global: boolean, dir: string }) => {
   const nuxtConfig = await loadNuxtConfig({ cwd: dir })
   if (!nuxtConfig || !nuxtConfig._layers[0]?.configFile) {
     logger.error('You are not in a Nuxt project.')
-    process.exit()
+    process.exit(1)
   }
 }
