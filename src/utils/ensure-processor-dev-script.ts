@@ -39,9 +39,19 @@ export async function ensureProcessorDevScript(
 
   logger.warn('No "processor:dev" script found in package.json.')
 
-  const answer = options?.ask
-    ? await options.ask()
-    : await createInterface({ input, output }).question('Add script to package.json? (y/N) ')
+  let answer: string
+  if (options?.ask) {
+    answer = await options.ask()
+  }
+  else {
+    const rl = createInterface({ input, output })
+    try {
+      answer = await rl.question('Add script to package.json? (y/N) ')
+    }
+    finally {
+      rl.close()
+    }
+  }
 
   const isYes = typeof answer === 'string' && /^y(?:es)?$/i.test(answer.trim())
   if (!isYes) {

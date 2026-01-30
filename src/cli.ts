@@ -42,12 +42,17 @@ export const main = createMain({
         const indexFile = resolve(projectRoot, '.nuxt/dev/workers/index.mjs')
         const watchDir = resolve(projectRoot, '.nuxt/dev/workers')
 
-        await ensureProcessorDevScript(projectRoot)
+        const scriptEnsured = await ensureProcessorDevScript(projectRoot)
 
         if (!existsSync(indexFile)) {
           logger.error('No entry file found at .nuxt/dev/workers/index.mjs')
           logger.info('Please start your Nuxt dev server (e.g. `npm run dev`).')
           logger.info('After it starts, run `npx nuxt-processor dev` again to start the processor.')
+          process.exit(1)
+        }
+
+        if (!scriptEnsured) {
+          logger.error('Could not ensure processor:dev script in package.json.')
           process.exit(1)
         }
 
