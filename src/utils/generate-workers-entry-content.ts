@@ -28,15 +28,28 @@ ${toImportArray}
 for (const loader of modules) {
 await loader()
 }
+// Parse --workers flag (e.g. --workers=basic,hello)
+const workersArg = process.argv.find(a => typeof a === 'string' && a.startsWith('--workers='))
+const selectedWorkers = workersArg
+  ? workersArg.split('=')[1].split(',').map(s => s.trim()).filter(Boolean)
+  : null
+const workersToRun = selectedWorkers
+  ? (Array.isArray(api.workers) ? api.workers.filter(w => w && selectedWorkers.includes(w.name)) : [])
+  : (Array.isArray(api.workers) ? api.workers : [])
 const logger = consola.create({}).withTag('nuxt-processor')
+if (selectedWorkers && workersToRun.length === 0) {
+  const available = (Array.isArray(api.workers) ? api.workers.map(w => w && w.name).filter(Boolean) : [])
+  logger.warn('No workers matched --workers=' + selectedWorkers.join(',') + (available.length ? '. Available: ' + available.join(', ') : '.'))
+  process.exit(1)
+}
 try {
-const workerNames = Array.isArray(api.workers) ? api.workers.map(w => w && w.name).filter(Boolean) : []
+const workerNames = workersToRun.map(w => w && w.name).filter(Boolean)
 logger.info('starting workers:\\n' + workerNames.map(n => ' - ' + n).join('\\n'))
-for (const w of api.workers) {
+for (const w of workersToRun) {
   w.on('error', (err) => logger.error('worker error', err))
 }
 // Explicitly start workers since autorun is disabled
-for (const w of api.workers) {
+for (const w of workersToRun) {
   try {
     // run() returns a promise that resolves when the worker stops; do not await to avoid blocking
     // eslint-disable-next-line promise/catch-or-return
@@ -50,7 +63,10 @@ logger.success('workers started')
 } catch (err) {
 logger.error('failed to initialize workers', err)
 }
-return { stop: api.stopAll, workers: api.workers }
+const closeRunningWorkers = async () => {
+  await Promise.allSettled(workersToRun.map(w => w.close()))
+}
+return { stop: closeRunningWorkers, workers: workersToRun }
 }
 
 const isMain = (() => {
