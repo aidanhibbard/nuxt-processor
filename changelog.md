@@ -1,4 +1,19 @@
 
+## v0.0.14
+
+[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v0.0.13...v0.0.14)
+
+### 🩹 Fixes
+
+- Upgrade @rollup/rollup-linux-x64-gnu from 4.9.5 to 4.53.3 ([74cb730](https://github.com/aidanhibbard/nuxt-processor/commit/74cb730))
+- Upgrade @bull-board/ui from 6.14.2 to 6.15.0 ([087d75a](https://github.com/aidanhibbard/nuxt-processor/commit/087d75a))
+- Upgrade @nuxt/kit from 4.2.0 to 4.2.2 ([270dd5d](https://github.com/aidanhibbard/nuxt-processor/commit/270dd5d))
+- Upgrade @bull-board/ui from 6.15.0 to 6.16.2 ([3e56d15](https://github.com/aidanhibbard/nuxt-processor/commit/3e56d15))
+
+### ❤️ Contributors
+
+- Snyk-bot <snyk-bot@snyk.io>
+
 ## v0.0.13
 
 [compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v0.0.12...v0.0.13)
