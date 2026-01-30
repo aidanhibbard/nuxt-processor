@@ -7,7 +7,7 @@ title: Getting Started
 ## Install
 
 ```bash
-npx nuxi@latest module add nuxt-processor
+npx nuxi@latest module add nuxt-processor@latest
 ```
 
 Add the module in `nuxt.config.ts` and set your Redis connection.
