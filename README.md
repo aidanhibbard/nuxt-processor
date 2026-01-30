@@ -121,13 +121,22 @@ nuxi dev
 node .nuxt/dev/workers/index.mjs
 ```
 
-### CLI
-
-A simple CLI is provided to run workers in development.
+By default all workers run. To run only specific workers, pass the `--workers` flag with a comma-separated list of worker names:
 
 ```bash
-# from your project root
+node .nuxt/dev/workers/index.mjs --workers basic,hello
+```
+
+### CLI
+
+A simple CLI is provided to run workers in development (with file watching and restarts).
+
+```bash
+# from your project root – runs all workers
 npx nuxt-processor dev
+
+# run only specific workers
+npx nuxt-processor dev --workers basic,hello
 ```
 
 Notes:
@@ -153,6 +162,12 @@ npm run processor:dev
 ```bash
 nuxi build
 node .output/server/workers/index.mjs
+```
+
+To run only specific workers in production:
+
+```bash
+node .output/server/workers/index.mjs --workers basic,hello
 ```
 
 ## Bull Board
