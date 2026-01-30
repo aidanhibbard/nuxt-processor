@@ -23,8 +23,8 @@ describe('generate-workers-entry-content', () => {
       ['/path/to/worker.mjs'],
       'undefined',
     )
-    expect(content).toContain("process.argv.find(a => typeof a === 'string' && a.startsWith('--workers='))")
-    expect(content).toContain("workersArg.split('=')[1].split(',').map(s => s.trim()).filter(Boolean)")
+    expect(content).toContain('process.argv.find(a => typeof a === \'string\' && a.startsWith(\'--workers=\'))')
+    expect(content).toContain('workersArg.split(\'=\')[1].split(\',\').map(s => s.trim()).filter(Boolean)')
     expect(content).toContain('selectedWorkers')
     expect(content).toContain('workersToRun')
   })
