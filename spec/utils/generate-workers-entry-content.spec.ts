@@ -2,6 +2,22 @@ import { describe, it, expect } from 'vitest'
 import { generateWorkersEntryContent } from '../../src/utils/generate-workers-entry-content'
 
 describe('generate-workers-entry-content', () => {
+  it('matches snapshot for single worker and undefined redis', () => {
+    const content = generateWorkersEntryContent(
+      ['/path/to/worker.mjs'],
+      'undefined',
+    )
+    expect(content).toMatchSnapshot()
+  })
+
+  it('matches snapshot for multiple workers and redis url', () => {
+    const content = generateWorkersEntryContent(
+      ['/app/server/workers/basic.ts', '/app/server/workers/hello.ts'],
+      'new (await import("ioredis")).default("redis://localhost:6379")',
+    )
+    expect(content).toMatchSnapshot()
+  })
+
   it('generates entry that parses --workers flag from process.argv', () => {
     const content = generateWorkersEntryContent(
       ['/path/to/worker.mjs'],
