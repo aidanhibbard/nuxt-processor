@@ -52,7 +52,18 @@ describe('generate-workers-entry-content', () => {
       'undefined',
     )
     expect(content).toContain('workersToRun.map(w => w.close())')
-    expect(content).toContain('stopOnlyRunning')
-    expect(content).toContain('return { stop: stopOnlyRunning, workers: workersToRun }')
+    expect(content).toContain('closeRunningWorkers')
+    expect(content).toContain('return { stop: closeRunningWorkers, workers: workersToRun }')
+  })
+
+  it('generates entry that warns when no workers match --workers filter', () => {
+    const content = generateWorkersEntryContent(
+      ['/path/to/worker.mjs'],
+      'undefined',
+    )
+    expect(content).toContain('selectedWorkers && workersToRun.length === 0')
+    expect(content).toContain('logger.warn')
+    expect(content).toContain('No workers matched')
+    expect(content).toContain('Available:')
   })
 })

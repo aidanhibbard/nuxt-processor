@@ -37,6 +37,10 @@ const workersToRun = selectedWorkers
   ? (Array.isArray(api.workers) ? api.workers.filter(w => w && selectedWorkers.includes(w.name)) : [])
   : (Array.isArray(api.workers) ? api.workers : [])
 const logger = consola.create({}).withTag('nuxt-processor')
+if (selectedWorkers && workersToRun.length === 0) {
+  const available = (Array.isArray(api.workers) ? api.workers.map(w => w && w.name).filter(Boolean) : [])
+  logger.warn('No workers matched --workers=' + selectedWorkers.join(',') + (available.length ? '. Available: ' + available.join(', ') : '.'))
+}
 try {
 const workerNames = workersToRun.map(w => w && w.name).filter(Boolean)
 logger.info('starting workers:\\n' + workerNames.map(n => ' - ' + n).join('\\n'))
@@ -58,11 +62,10 @@ logger.success('workers started')
 } catch (err) {
 logger.error('failed to initialize workers', err)
 }
-const stopOnlyRunning = async () => {
+const closeRunningWorkers = async () => {
   await Promise.allSettled(workersToRun.map(w => w.close()))
-  await Promise.allSettled(api.queues.map(q => q.close()))
 }
-return { stop: stopOnlyRunning, workers: workersToRun }
+return { stop: closeRunningWorkers, workers: workersToRun }
 }
 
 const isMain = (() => {
