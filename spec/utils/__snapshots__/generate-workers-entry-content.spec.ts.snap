@@ -42,6 +42,7 @@ const logger = consola.create({}).withTag('nuxt-processor')
 if (selectedWorkers && workersToRun.length === 0) {
   const available = (Array.isArray(api.workers) ? api.workers.map(w => w && w.name).filter(Boolean) : [])
   logger.warn('No workers matched --workers=' + selectedWorkers.join(',') + (available.length ? '. Available: ' + available.join(', ') : '.'))
+  process.exit(1)
 }
 try {
 const workerNames = workersToRun.map(w => w && w.name).filter(Boolean)
@@ -148,6 +149,7 @@ const logger = consola.create({}).withTag('nuxt-processor')
 if (selectedWorkers && workersToRun.length === 0) {
   const available = (Array.isArray(api.workers) ? api.workers.map(w => w && w.name).filter(Boolean) : [])
   logger.warn('No workers matched --workers=' + selectedWorkers.join(',') + (available.length ? '. Available: ' + available.join(', ') : '.'))
+  process.exit(1)
 }
 try {
 const workerNames = workersToRun.map(w => w && w.name).filter(Boolean)

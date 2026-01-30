@@ -56,7 +56,7 @@ describe('generate-workers-entry-content', () => {
     expect(content).toContain('return { stop: closeRunningWorkers, workers: workersToRun }')
   })
 
-  it('generates entry that warns when no workers match --workers filter', () => {
+  it('generates entry that warns and exits when no workers match --workers filter', () => {
     const content = generateWorkersEntryContent(
       ['/path/to/worker.mjs'],
       'undefined',
@@ -65,5 +65,6 @@ describe('generate-workers-entry-content', () => {
     expect(content).toContain('logger.warn')
     expect(content).toContain('No workers matched')
     expect(content).toContain('Available:')
+    expect(content).toContain('process.exit(1)')
   })
 })
