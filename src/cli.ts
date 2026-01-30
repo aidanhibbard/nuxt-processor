@@ -3,11 +3,11 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { createInterface } from 'node:readline/promises'
 import { stdin as input, stdout as output } from 'node:process'
 import { resolve } from 'pathe'
-import { consola } from 'consola'
 import { createMain, defineCommand } from 'citty'
 
 import ensureNuxtProject from './utils/ensure-nuxt-project'
 import { version, name, description } from '../package.json'
+import { logger } from './utils/logger'
 
 export const main = createMain({
   meta: {
@@ -52,7 +52,7 @@ export const main = createMain({
               const pkg = pkgRaw as { scripts?: Record<string, string> }
               const hasProcessorDev = Boolean(pkg && pkg.scripts && pkg.scripts['processor:dev'])
               if (!hasProcessorDev) {
-                consola.warn('No "processor:dev" script found in package.json.')
+                logger.warn('No "processor:dev" script found in package.json.')
                 const rl = createInterface({ input, output })
                 const answer = await rl.question('Add script to package.json? (y/N) ')
                 rl.close()
@@ -67,16 +67,16 @@ export const main = createMain({
                   }
                   try {
                     writeFileSync(pkgPath, JSON.stringify(updated, null, 2) + '\n', 'utf8')
-                    consola.success('Added "processor:dev" script to package.json')
+                    logger.success('Added "processor:dev" script to package.json')
                   }
                   catch {
-                    consola.error('Failed to write to package.json')
+                    logger.error('Failed to write to package.json')
                   }
                 }
               }
             }
-            catch {
-              // ignore JSON parse errors
+            catch (error) {
+              logger.error('Failed to parse', error)
             }
           }
         }
@@ -91,7 +91,7 @@ export const main = createMain({
               const pkg = pkgRaw as { scripts?: Record<string, string> }
               hasProcessorDev = Boolean(pkg && pkg.scripts && pkg.scripts['processor:dev'])
               if (!hasProcessorDev) {
-                consola.warn('No "processor:dev" script found in package.json.')
+                logger.warn('No "processor:dev" script found in package.json.')
 
                 const rl = createInterface({ input, output })
                 const answer = await rl.question('Add script to package.json? (y/N) ')
@@ -102,27 +102,27 @@ export const main = createMain({
                   const updated = {
                     ...pkg,
                     scripts: {
-                      ...(pkg.scripts || {}),
+                      ...(pkg.scripts ?? {}),
                       'processor:dev': 'nuxt-processor dev',
                     },
                   }
                   try {
                     writeFileSync(pkgPath, JSON.stringify(updated, null, 2) + '\n', 'utf8')
-                    consola.success('Added "processor:dev" script to package.json')
+                    logger.success('Added "processor:dev" script to package.json')
                   }
                   catch {
-                    consola.error('Failed to write to package.json')
+                    logger.error('Failed to write to package.json')
                   }
                 }
               }
             }
-            catch {
-              // ignore JSON parse errors, still show guidance
+            catch (error) {
+              logger.error('Failed to parse', error)
             }
           }
-          consola.error('No entry file found at .nuxt/dev/workers/index.mjs')
-          consola.info('Please start your Nuxt dev server (e.g. `npm run dev`).')
-          consola.info('After it starts, run `npx nuxt-processor dev` again to start the processor.')
+          logger.error('No entry file found at .nuxt/dev/workers/index.mjs')
+          logger.info('Please start your Nuxt dev server (e.g. `npm run dev`).')
+          logger.info('After it starts, run `npx nuxt-processor dev` again to start the processor.')
           process.exit(1)
         }
 
@@ -140,7 +140,7 @@ export const main = createMain({
           ...(args.workers ? [`--workers=${args.workers}`] : []),
         ]
 
-        consola.info(`Running watcher for processor`)
+        logger.info(`Running watcher for processor`)
         const child = spawn(nodeBin, nodeArgs, {
           stdio: 'inherit',
           cwd: projectRoot,
