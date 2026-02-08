@@ -1,16 +1,17 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`generate-workers-entry-content > matches snapshot for multiple workers and redis url 1`] = `
+exports[`generate-workers-entry-content > matches snapshot for multiple workers and redis config 1`] = `
 "
 import { fileURLToPath } from 'node:url'
 import { resolve as resolvePath } from 'node:path'
 import { consola } from 'consola'
 import { $workers } from '#processor-utils'
+import { resolveRedisConnection } from '#resolve-redis'
 
 // Initialize connection as early as possible so any imports that register
 // workers/queues have a valid connection available.
 const api = $workers()
-api.setConnection(new (await import("ioredis")).default("redis://localhost:6379"))
+api.setConnection(resolveRedisConnection({"host":"localhost","port":6379}))
 
 export async function createWorkersApp() {
 // Avoid EPIPE when stdout/stderr are closed by terminal (e.g., Ctrl+C piping)
@@ -108,17 +109,18 @@ export default { createWorkersApp }
 "
 `;
 
-exports[`generate-workers-entry-content > matches snapshot for single worker and undefined redis 1`] = `
+exports[`generate-workers-entry-content > matches snapshot for single worker and empty redis config 1`] = `
 "
 import { fileURLToPath } from 'node:url'
 import { resolve as resolvePath } from 'node:path'
 import { consola } from 'consola'
 import { $workers } from '#processor-utils'
+import { resolveRedisConnection } from '#resolve-redis'
 
 // Initialize connection as early as possible so any imports that register
 // workers/queues have a valid connection available.
 const api = $workers()
-api.setConnection(undefined)
+api.setConnection(resolveRedisConnection({}))
 
 export async function createWorkersApp() {
 // Avoid EPIPE when stdout/stderr are closed by terminal (e.g., Ctrl+C piping)

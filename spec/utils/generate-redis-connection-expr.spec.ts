@@ -1,17 +1,31 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { generateRedisConnectionExpr } from '../../src/utils/generate-redis-connection-expr'
-
-// Helper: evaluate the generated expression in current process context
-function evalExpr(expr: string): unknown {
-  return eval(expr)
-}
+import { generateRedisConnectionExpr, getRedisConnectionImport } from '../../src/utils/generate-redis-connection-expr'
+import { resolveRedisConnection } from '../../src/runtime/server/utils/resolve-redis-connection'
 
 function clearEnvKey(key: string) {
   Reflect.deleteProperty(process.env, key)
 }
 
 describe('generateRedisConnectionExpr', () => {
-  const savedEnv: Record<string, string | undefined> = {}
+  it('wraps static config in a resolveRedisConnection call', () => {
+    const expr = generateRedisConnectionExpr('{"host":"10.0.0.1"}')
+    expect(expr).toBe('resolveRedisConnection({"host":"10.0.0.1"})')
+  })
+
+  it('handles empty config', () => {
+    const expr = generateRedisConnectionExpr('{}')
+    expect(expr).toBe('resolveRedisConnection({})')
+  })
+})
+
+describe('getRedisConnectionImport', () => {
+  it('returns an import statement with the given alias', () => {
+    expect(getRedisConnectionImport('#resolve-redis'))
+      .toBe('import { resolveRedisConnection } from \'#resolve-redis\'')
+  })
+})
+
+describe('resolveRedisConnection', () => {
   const envKeys = [
     'NUXT_REDIS_URL',
     'NUXT_REDIS_HOST',
@@ -22,6 +36,7 @@ describe('generateRedisConnectionExpr', () => {
     'NUXT_REDIS_LAZY_CONNECT',
     'NUXT_REDIS_CONNECT_TIMEOUT',
   ]
+  const savedEnv: Record<string, string | undefined> = {}
 
   beforeEach(() => {
     for (const key of envKeys) {
@@ -42,9 +57,7 @@ describe('generateRedisConnectionExpr', () => {
   })
 
   it('returns static config when no env vars are set', () => {
-    const staticRedis = JSON.stringify({ host: '10.0.0.1', port: 6380, password: 'secret', db: 2 })
-    const expr = generateRedisConnectionExpr(staticRedis)
-    const result = evalExpr(expr) as Record<string, unknown>
+    const result = resolveRedisConnection({ host: '10.0.0.1', port: 6380, password: 'secret', db: 2 })
 
     expect(result).toEqual({
       host: '10.0.0.1',
@@ -57,21 +70,21 @@ describe('generateRedisConnectionExpr', () => {
     })
   })
 
-  it('returns NUXT_REDIS_URL when set at runtime', () => {
+  it('includes url in returned object when NUXT_REDIS_URL is set', () => {
     process.env.NUXT_REDIS_URL = 'redis://prod-host:6379/1'
-    const staticRedis = JSON.stringify({ host: '127.0.0.1', port: 6379 })
-    const expr = generateRedisConnectionExpr(staticRedis)
-    const result = evalExpr(expr)
+    const result = resolveRedisConnection({ host: '127.0.0.1', port: 6379 })
 
-    expect(result).toBe('redis://prod-host:6379/1')
+    expect(result).toMatchObject({ url: 'redis://prod-host:6379/1' })
+    // Other options are still present alongside url
+    expect(result).toHaveProperty('host')
+    expect(result).toHaveProperty('port')
   })
 
-  it('returns static url when set in config and no env url', () => {
-    const staticRedis = JSON.stringify({ url: 'redis://config-host:6379/0', host: '127.0.0.1' })
-    const expr = generateRedisConnectionExpr(staticRedis)
-    const result = evalExpr(expr)
+  it('includes url from static config when no env url is set', () => {
+    const result = resolveRedisConnection({ url: 'redis://config-host:6379/0', host: '127.0.0.1' })
 
-    expect(result).toBe('redis://config-host:6379/0')
+    expect(result).toMatchObject({ url: 'redis://config-host:6379/0' })
+    expect(result).toHaveProperty('host', '127.0.0.1')
   })
 
   it('env vars override individual static fields', () => {
@@ -81,9 +94,7 @@ describe('generateRedisConnectionExpr', () => {
     process.env.NUXT_REDIS_USERNAME = 'admin'
     process.env.NUXT_REDIS_DB = '5'
 
-    const staticRedis = JSON.stringify({ host: '10.0.0.1', port: 6380, password: 'build-pw', db: 2 })
-    const expr = generateRedisConnectionExpr(staticRedis)
-    const result = evalExpr(expr) as Record<string, unknown>
+    const result = resolveRedisConnection({ host: '10.0.0.1', port: 6380, password: 'build-pw', db: 2 })
 
     expect(result).toEqual({
       host: '192.168.1.100',
@@ -98,11 +109,8 @@ describe('generateRedisConnectionExpr', () => {
 
   it('env vars partially override static fields', () => {
     process.env.NUXT_REDIS_HOST = 'new-host'
-    // port, password etc. not set in env
 
-    const staticRedis = JSON.stringify({ host: '10.0.0.1', port: 6380, password: 'build-pw', db: 2 })
-    const expr = generateRedisConnectionExpr(staticRedis)
-    const result = evalExpr(expr) as Record<string, unknown>
+    const result = resolveRedisConnection({ host: '10.0.0.1', port: 6380, password: 'build-pw', db: 2 })
 
     expect(result).toMatchObject({
       host: 'new-host',
@@ -112,22 +120,18 @@ describe('generateRedisConnectionExpr', () => {
     })
   })
 
-  it('NUXT_REDIS_URL env takes priority over static url in config', () => {
+  it('NUXT_REDIS_URL env takes priority over static url', () => {
     process.env.NUXT_REDIS_URL = 'redis://env-host:6379'
-    const staticRedis = JSON.stringify({ url: 'redis://config-host:6379' })
-    const expr = generateRedisConnectionExpr(staticRedis)
-    const result = evalExpr(expr)
+    const result = resolveRedisConnection({ url: 'redis://config-host:6379' })
 
-    expect(result).toBe('redis://env-host:6379')
+    expect(result).toMatchObject({ url: 'redis://env-host:6379' })
   })
 
   it('handles lazyConnect and connectTimeout from env', () => {
     process.env.NUXT_REDIS_LAZY_CONNECT = 'true'
     process.env.NUXT_REDIS_CONNECT_TIMEOUT = '5000'
 
-    const staticRedis = JSON.stringify({})
-    const expr = generateRedisConnectionExpr(staticRedis)
-    const result = evalExpr(expr) as Record<string, unknown>
+    const result = resolveRedisConnection({})
 
     expect(result).toMatchObject({
       lazyConnect: true,
@@ -136,9 +140,7 @@ describe('generateRedisConnectionExpr', () => {
   })
 
   it('falls back to defaults when both static and env are empty', () => {
-    const staticRedis = JSON.stringify({})
-    const expr = generateRedisConnectionExpr(staticRedis)
-    const result = evalExpr(expr) as Record<string, unknown>
+    const result = resolveRedisConnection({})
 
     expect(result).toEqual({
       host: '127.0.0.1',
@@ -151,11 +153,27 @@ describe('generateRedisConnectionExpr', () => {
     })
   })
 
-  it('generated expression contains process.env references', () => {
-    const expr = generateRedisConnectionExpr('{}')
-    expect(expr).toContain('process.env.NUXT_REDIS_URL')
-    expect(expr).toContain('process.env.NUXT_REDIS_HOST')
-    expect(expr).toContain('process.env.NUXT_REDIS_PORT')
-    expect(expr).toContain('process.env.NUXT_REDIS_PASSWORD')
+  it('does not include url key when no url is provided', () => {
+    const result = resolveRedisConnection({ host: '10.0.0.1' })
+
+    expect(result).not.toHaveProperty('url')
+  })
+
+  it('preserves all options alongside url for setConnection', () => {
+    process.env.NUXT_REDIS_URL = 'redis://prod:6379'
+    process.env.NUXT_REDIS_PASSWORD = 'prod-pw'
+
+    const result = resolveRedisConnection({ host: '127.0.0.1', connectTimeout: 10000 })
+
+    expect(result).toEqual({
+      url: 'redis://prod:6379',
+      host: '127.0.0.1',
+      port: 6379,
+      password: 'prod-pw',
+      username: undefined,
+      db: 0,
+      lazyConnect: undefined,
+      connectTimeout: 10000,
+    })
   })
 })

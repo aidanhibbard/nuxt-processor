@@ -5,7 +5,7 @@ import type { Plugin } from 'rollup'
 import { relative } from 'node:path'
 import scanFolder from './utils/scan-folder'
 import { generateWorkersEntryContent } from './utils/generate-workers-entry-content'
-import { generateRedisConnectionExpr } from './utils/generate-redis-connection-expr'
+import { generateRedisConnectionExpr, getRedisConnectionImport } from './utils/generate-redis-connection-expr'
 
 // Module options TypeScript interface definition
 type ModuleRedisOptions = BullRedisOptions & { url?: string }
@@ -47,9 +47,12 @@ export default defineNuxtModule<ModuleOptions>({
     const staticRedis = JSON.stringify(_options.redis ?? {})
     const redisConnectionExpr = generateRedisConnectionExpr(staticRedis)
 
+    const redisImport = getRedisConnectionImport('#resolve-redis')
+
     const nitroPlugin = `
     import { defineNitroPlugin } from '#imports'
     import { $workers } from '#processor-utils'
+    ${redisImport}
 
     export default defineNitroPlugin(() => {
       $workers().setConnection(${redisConnectionExpr})
@@ -69,6 +72,7 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.alias['nuxt-processor'] = resolve('./runtime/server/handlers')
     nuxt.options.alias['#processor'] = resolve('./runtime/server/handlers')
     nuxt.options.alias['#processor-utils'] = resolve('./runtime/server/utils/workers')
+    nuxt.options.alias['#resolve-redis'] = resolve('./runtime/server/utils/resolve-redis-connection')
     // Allow swapping BullMQ implementation allowing for bullmq pro (default to 'bullmq')
     if (!nuxt.options.alias['#bullmq']) {
       nuxt.options.alias['#bullmq'] = 'bullmq'
@@ -90,6 +94,10 @@ declare module '#processor' {
 
 declare module '#processor-utils' {
   export { $workers } from '${resolve('./runtime/server/utils/workers')}'
+}
+
+declare module '#resolve-redis' {
+  export { resolveRedisConnection } from '${resolve('./runtime/server/utils/resolve-redis-connection')}'
 }
 
 declare module '#bullmq' {
