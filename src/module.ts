@@ -5,6 +5,7 @@ import type { Plugin } from 'rollup'
 import { relative } from 'node:path'
 import scanFolder from './utils/scan-folder'
 import { generateWorkersEntryContent } from './utils/generate-workers-entry-content'
+import { generateRedisConnectionExpr } from './utils/generate-redis-connection-expr'
 
 // Module options TypeScript interface definition
 type ModuleRedisOptions = BullRedisOptions & { url?: string }
@@ -43,14 +44,15 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
-    const redisInline = JSON.stringify(_options.redis ?? {})
+    const staticRedis = JSON.stringify(_options.redis ?? {})
+    const redisConnectionExpr = generateRedisConnectionExpr(staticRedis)
 
     const nitroPlugin = `
     import { defineNitroPlugin } from '#imports'
     import { $workers } from '#processor-utils'
 
     export default defineNitroPlugin(() => {
-      $workers().setConnection(${redisInline})
+      $workers().setConnection(${redisConnectionExpr})
     })
     `
 
@@ -109,7 +111,7 @@ declare module '#bullmq' {
             virtualCode = ''
             return
           }
-          virtualCode = generateWorkersEntryContent(workerFiles, redisInline)
+          virtualCode = generateWorkersEntryContent(workerFiles, redisConnectionExpr)
           for (const id of workerFiles) {
             this.addWatchFile(id)
           }
