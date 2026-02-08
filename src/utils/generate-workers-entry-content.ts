@@ -1,15 +1,19 @@
-export function generateWorkersEntryContent(workerFiles: string[], redisInline: string): string {
+import { getRedisConnectionImport } from './generate-redis-connection-expr'
+
+export function generateWorkersEntryContent(workerFiles: string[], redisConnectionExpr: string): string {
   const toImportArray = workerFiles.map(id => `() => import(${JSON.stringify(id)})`).join(',\n    ')
+  const redisImport = getRedisConnectionImport('#resolve-redis')
   return `
 import { fileURLToPath } from 'node:url'
 import { resolve as resolvePath } from 'node:path'
 import { consola } from 'consola'
 import { $workers } from '#processor-utils'
+${redisImport}
 
 // Initialize connection as early as possible so any imports that register
 // workers/queues have a valid connection available.
 const api = $workers()
-api.setConnection(${redisInline})
+api.setConnection(${redisConnectionExpr})
 
 export async function createWorkersApp() {
 // Avoid EPIPE when stdout/stderr are closed by terminal (e.g., Ctrl+C piping)
