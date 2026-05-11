@@ -5,12 +5,14 @@ exports[`generate-workers-entry-content > matches snapshot for multiple workers 
 import { fileURLToPath } from 'node:url'
 import { resolve as resolvePath } from 'node:path'
 import { consola } from 'consola'
+import { useRuntimeConfig } from '#imports'
 import { $workers } from '#processor-utils'
 
 // Initialize connection as early as possible so any imports that register
 // workers/queues have a valid connection available.
 const api = $workers()
-api.setConnection(new (await import("ioredis")).default("redis://localhost:6379"))
+const { redis } = useRuntimeConfig()
+api.setConnection(process.env.REDIS_URL ? { ...redis, url: process.env.REDIS_URL } : redis)
 
 export async function createWorkersApp() {
 // Avoid EPIPE when stdout/stderr are closed by terminal (e.g., Ctrl+C piping)
@@ -113,12 +115,14 @@ exports[`generate-workers-entry-content > matches snapshot for single worker and
 import { fileURLToPath } from 'node:url'
 import { resolve as resolvePath } from 'node:path'
 import { consola } from 'consola'
+import { useRuntimeConfig } from '#imports'
 import { $workers } from '#processor-utils'
 
 // Initialize connection as early as possible so any imports that register
 // workers/queues have a valid connection available.
 const api = $workers()
-api.setConnection(undefined)
+const { redis } = useRuntimeConfig()
+api.setConnection(process.env.REDIS_URL ? { ...redis, url: process.env.REDIS_URL } : redis)
 
 export async function createWorkersApp() {
 // Avoid EPIPE when stdout/stderr are closed by terminal (e.g., Ctrl+C piping)
