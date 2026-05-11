@@ -69,6 +69,7 @@
     "happy-dom": "^20.9.0",
     "nuxt": "^4.4.5",
     "typescript": "~5.9.2",
+    "unbuild": "^3.6.1",
     "vitepress": "^2.0.0-alpha.12",
     "vitest": "^4.1.5",
     "vue-tsc": "^3.2.8"
