@@ -55,7 +55,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     export default defineNitroPlugin(() => {
       const { redis } = useRuntimeConfig()
-      $workers().setConnection(redis)
+      $workers().setConnection(process.env.REDIS_URL ? { ...redis, url: process.env.REDIS_URL } : redis)
     })
     `
 

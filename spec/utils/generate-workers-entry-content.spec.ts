@@ -16,14 +16,14 @@ describe('generate-workers-entry-content', () => {
     expect(content).toMatchSnapshot()
   })
 
-  it('generates entry that reads Redis from runtime config', () => {
+  it('generates entry that reads Redis from runtime config and REDIS_URL', () => {
     const content = generateWorkersEntryContent(
       ['/path/to/worker.mjs'],
     )
 
     expect(content).toContain('import { useRuntimeConfig } from \'#imports\'')
     expect(content).toContain('const { redis } = useRuntimeConfig()')
-    expect(content).toContain('api.setConnection(redis)')
+    expect(content).toContain('api.setConnection(process.env.REDIS_URL ? { ...redis, url: process.env.REDIS_URL } : redis)')
   })
 
   it('generates entry that parses --workers flag from process.argv', () => {

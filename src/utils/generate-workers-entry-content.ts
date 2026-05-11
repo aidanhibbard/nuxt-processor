@@ -11,7 +11,7 @@ import { $workers } from '#processor-utils'
 // workers/queues have a valid connection available.
 const api = $workers()
 const { redis } = useRuntimeConfig()
-api.setConnection(redis)
+api.setConnection(process.env.REDIS_URL ? { ...redis, url: process.env.REDIS_URL } : redis)
 
 export async function createWorkersApp() {
 // Avoid EPIPE when stdout/stderr are closed by terminal (e.g., Ctrl+C piping)
