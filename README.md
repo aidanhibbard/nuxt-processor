@@ -54,20 +54,20 @@ export default defineNuxtConfig({
     redis: {
       // Prefer a single URL if available (takes precedence over other fields)
       // e.g. redis://user:pass@host:6379/0
-      url: process.env.NUXT_REDIS_URL,
-      host: process.env.NUXT_REDIS_HOST ?? '127.0.0.1',
-      port: Number(process.env.NUXT_REDIS_PORT ?? 6379),
-      password: process.env.NUXT_REDIS_PASSWORD ?? '',
-      username: process.env.NUXT_REDIS_USERNAME,
-      db: Number(process.env.NUXT_REDIS_DB ?? 0),
+      url: process.env.REDIS_URL,
+      host: process.env.REDIS_HOST ?? '127.0.0.1',
+      port: Number(process.env.REDIS_PORT ?? 6379),
+      password: process.env.REDIS_PASSWORD ?? '',
+      username: process.env.REDIS_USERNAME,
+      db: Number(process.env.REDIS_DB ?? 0),
       // Optional connection behavior
       // Delay connecting until first Redis command (useful to avoid build-time connects)
-      lazyConnect: process.env.NUXT_REDIS_LAZY_CONNECT
-        ? process.env.NUXT_REDIS_LAZY_CONNECT === 'true'
+      lazyConnect: process.env.REDIS_LAZY_CONNECT
+        ? process.env.REDIS_LAZY_CONNECT === 'true'
         : undefined,
       // Milliseconds to wait before giving up when establishing the connection
-      connectTimeout: process.env.NUXT_REDIS_CONNECT_TIMEOUT
-        ? Number(process.env.NUXT_REDIS_CONNECT_TIMEOUT)
+      connectTimeout: process.env.REDIS_CONNECT_TIMEOUT
+        ? Number(process.env.REDIS_CONNECT_TIMEOUT)
         : undefined,
     },
   },

@@ -29,14 +29,14 @@ export default defineNuxtModule<ModuleOptions>({
   // Default configuration options of the Nuxt module
   defaults: {
     redis: {
-      host: process.env.NUXT_REDIS_HOST ?? '127.0.0.1',
-      port: Number(process.env.NUXT_REDIS_PORT ?? 6379),
-      password: process.env.NUXT_REDIS_PASSWORD ?? '',
-      username: process.env.NUXT_REDIS_USERNAME ?? undefined, // needs Redis >= 6
-      db: Number(process.env.NUXT_REDIS_DB ?? 0), // Defaults to 0 on ioredis
-      lazyConnect: process.env.NUXT_REDIS_LAZY_CONNECT === 'true' ? true : undefined,
-      connectTimeout: process.env.NUXT_REDIS_CONNECT_TIMEOUT ? Number(process.env.NUXT_REDIS_CONNECT_TIMEOUT) : undefined,
-      url: process.env.NUXT_REDIS_URL ?? undefined,
+      host: process.env.REDIS_HOST ?? '127.0.0.1',
+      port: Number(process.env.REDIS_PORT ?? 6379),
+      password: process.env.REDIS_PASSWORD ?? '',
+      username: process.env.REDIS_USERNAME ?? undefined, // needs Redis >= 6
+      db: Number(process.env.REDIS_DB ?? 0), // Defaults to 0 on ioredis
+      lazyConnect: process.env.REDIS_LAZY_CONNECT === 'true' ? true : undefined,
+      connectTimeout: process.env.REDIS_CONNECT_TIMEOUT ? Number(process.env.REDIS_CONNECT_TIMEOUT) : undefined,
+      url: process.env.REDIS_URL ?? undefined,
     } as ModuleRedisOptions,
     workers: 'server/workers',
   },
