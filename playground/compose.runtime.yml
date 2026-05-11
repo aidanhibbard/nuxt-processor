@@ -7,6 +7,7 @@ services:
     build:
       context: ..
       dockerfile: playground/Dockerfile
+    command: ["node", ".output/server/index.mjs"]
     environment:
       NUXT_REDIS_URL: redis://redis-runtime:6381/0
     depends_on:
@@ -16,7 +17,6 @@ services:
     build:
       context: ..
       dockerfile: playground/Dockerfile
-    command: ["node", ".output/server/workers/index.mjs"]
     environment:
       NUXT_REDIS_URL: redis://redis-runtime:6381/0
     depends_on:

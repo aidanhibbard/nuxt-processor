@@ -20,4 +20,4 @@ COPY --from=build /app/playground/.output ./.output
 COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/playground/node_modules ./node_modules
 
-CMD ["node", ".output/server/index.mjs"]
+CMD ["node", ".output/server/workers/index.mjs"]
