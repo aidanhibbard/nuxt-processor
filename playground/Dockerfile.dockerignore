@@ -1,0 +1,10 @@
+.git
+.cursor
+.nuxt
+.output
+coverage
+dist
+node_modules
+playground/.nuxt
+playground/.output
+playground/node_modules

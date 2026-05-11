@@ -43,14 +43,19 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
-    const redisInline = JSON.stringify(_options.redis ?? {})
+    const runtimeConfig = nuxt.options.runtimeConfig as typeof nuxt.options.runtimeConfig & { redis?: ModuleRedisOptions }
+    runtimeConfig.redis = {
+      ...(_options.redis ?? {}),
+      ...(runtimeConfig.redis ?? {}),
+    }
 
     const nitroPlugin = `
-    import { defineNitroPlugin } from '#imports'
+    import { defineNitroPlugin, useRuntimeConfig } from '#imports'
     import { $workers } from '#processor-utils'
 
     export default defineNitroPlugin(() => {
-      $workers().setConnection(${redisInline})
+      const { redis } = useRuntimeConfig()
+      $workers().setConnection(redis)
     })
     `
 
@@ -109,7 +114,7 @@ declare module '#bullmq' {
             virtualCode = ''
             return
           }
-          virtualCode = generateWorkersEntryContent(workerFiles, redisInline)
+          virtualCode = generateWorkersEntryContent(workerFiles)
           for (const id of workerFiles) {
             this.addWatchFile(id)
           }
