@@ -36,13 +36,16 @@ const ioredisConnectMock = vi.fn()
 const ioredisConstructorMock = vi.fn()
 
 vi.mock('ioredis', () => {
-  return {
-    default: vi.fn().mockImplementation((...args: unknown[]) => {
+  class MockIORedis {
+    connect = ioredisConnectMock
+
+    constructor(...args: unknown[]) {
       ioredisConstructorMock(...args)
-      return {
-        connect: ioredisConnectMock,
-      }
-    }),
+    }
+  }
+
+  return {
+    default: MockIORedis,
   }
 })
 
