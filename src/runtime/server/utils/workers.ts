@@ -20,15 +20,23 @@ export function $workers() {
 
   function setConnection(connection: ConnectionInput) {
     if (connection && typeof connection === 'object' && 'url' in connection && connection.url) {
-      registry.connection = { ...connection, maxRetriesPerRequest: null }
+      registry.connection = connection
     }
     else if (typeof connection === 'string') {
-      registry.connection = { url: connection, maxRetriesPerRequest: null }
+      registry.connection = { url: connection }
     }
     else {
-      // When passing raw options, ensure BullMQ-required setting
-      registry.connection = { ...(connection as RedisOptions), maxRetriesPerRequest: null }
+      registry.connection = connection as QueueOptions['connection']
     }
+  }
+
+  function getWorkerConnection() {
+    if (!registry.connection) return registry.connection
+
+    return {
+      ...(registry.connection as RedisOptions),
+      maxRetriesPerRequest: null,
+    } as QueueOptions['connection']
   }
 
   function createQueue<
@@ -61,7 +69,7 @@ export function $workers() {
     options?: Omit<WorkerOptions, 'connection'>,
   ): Worker<DataType, ResultType, NameType> {
     const worker = new Worker<DataType, ResultType, NameType>(name, processor, {
-      connection: registry.connection as QueueOptions['connection'],
+      connection: getWorkerConnection(),
       ...options,
       autorun: false,
     })
