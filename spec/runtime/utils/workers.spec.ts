@@ -43,7 +43,7 @@ describe('$workers registry', () => {
 
     expect(queue.name).toBe('test-queue')
     expect((queue.opts.connection)).toEqual(expect.objectContaining(connection))
-    expect((queue.opts.connection as unknown as { maxRetriesPerRequest: unknown }).maxRetriesPerRequest).toBeNull()
+    expect((queue.opts.connection as unknown as { maxRetriesPerRequest?: unknown }).maxRetriesPerRequest).toBeUndefined()
     expect(worker.name).toBe('test-queue')
     expect((worker).opts.connection).toEqual(expect.objectContaining(connection))
     expect(((worker).opts.connection as unknown as { maxRetriesPerRequest: unknown }).maxRetriesPerRequest).toBeNull()
@@ -66,12 +66,14 @@ describe('$workers registry', () => {
 
     expect((queue).opts.connection).toEqual({
       url: 'redis://user:pass@localhost:6379/0',
+    })
+    expect((worker).opts.connection).toEqual({
+      url: 'redis://user:pass@localhost:6379/0',
       maxRetriesPerRequest: null,
     })
-    expect((worker).opts.connection).toEqual((queue).opts.connection)
   })
 
-  it('passes an object with url property through as BullMQ connection options and sets maxRetriesPerRequest=null', async () => {
+  it('passes an object with url property through for queues and sets maxRetriesPerRequest=null for workers', async () => {
     const api = $workers()
     api.setConnection({ url: 'redis://localhost:6379/0', password: 'secret', db: 1 })
 
@@ -82,9 +84,14 @@ describe('$workers registry', () => {
       url: 'redis://localhost:6379/0',
       password: 'secret',
       db: 1,
+    }))
+    expect(((queue).opts.connection as unknown as { maxRetriesPerRequest?: unknown }).maxRetriesPerRequest).toBeUndefined()
+    expect((worker).opts.connection).toEqual(expect.objectContaining({
+      url: 'redis://localhost:6379/0',
+      password: 'secret',
+      db: 1,
       maxRetriesPerRequest: null,
     }))
-    expect((worker).opts.connection).toEqual((queue).opts.connection)
   })
 
   it('registry can store heterogeneous generic instances safely', async () => {

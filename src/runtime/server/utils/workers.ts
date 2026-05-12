@@ -69,7 +69,7 @@ export function $workers() {
     options?: Omit<WorkerOptions, 'connection'>,
   ): Worker<DataType, ResultType, NameType> {
     const worker = new Worker<DataType, ResultType, NameType>(name, processor, {
-      connection: getWorkerConnection(),
+      connection: getWorkerConnection() as WorkerOptions['connection'],
       ...options,
       autorun: false,
     })
