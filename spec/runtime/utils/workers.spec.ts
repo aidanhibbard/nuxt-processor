@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 
 import { $workers, type Processor } from '../../../src/runtime/server/utils/workers'
 
@@ -32,29 +32,7 @@ vi.mock('bullmq', () => {
   return { Queue: MockQueue, Worker: MockWorker }
 })
 
-const ioredisConnectMock = vi.fn()
-const ioredisConstructorMock = vi.fn()
-
-vi.mock('ioredis', () => {
-  class MockIORedis {
-    connect = ioredisConnectMock
-
-    constructor(...args: unknown[]) {
-      ioredisConstructorMock(...args)
-    }
-  }
-
-  return {
-    default: MockIORedis,
-  }
-})
-
 describe('$workers registry', () => {
-  beforeEach(() => {
-    ioredisConstructorMock.mockClear()
-    ioredisConnectMock.mockClear()
-  })
-
   it('creates queues and workers with shared connection and autorun=false', async () => {
     const api = $workers()
     const connection = { host: '127.0.0.1', port: 6379 }
@@ -79,30 +57,34 @@ describe('$workers registry', () => {
     expect((worker).close).toHaveBeenCalled()
   })
 
-  it('uses IORedis when given a connection url string', async () => {
+  it('passes a connection url string through as BullMQ connection options', async () => {
     const api = $workers()
     api.setConnection('redis://user:pass@localhost:6379/0')
 
     const queue = api.createQueue('q1')
     const worker = api.createWorker('q1', async () => {})
 
-    expect(ioredisConstructorMock).toHaveBeenCalledTimes(1)
-    expect(ioredisConstructorMock).toHaveBeenCalledWith('redis://user:pass@localhost:6379/0', expect.objectContaining({ maxRetriesPerRequest: null }))
-    expect((queue).opts.connection).toBeDefined()
-    expect((worker).opts.connection).toBeDefined()
+    expect((queue).opts.connection).toEqual({
+      url: 'redis://user:pass@localhost:6379/0',
+      maxRetriesPerRequest: null,
+    })
+    expect((worker).opts.connection).toEqual((queue).opts.connection)
   })
 
-  it('uses IORedis when given an object with url property, passing rest as options and setting maxRetriesPerRequest=null', async () => {
+  it('passes an object with url property through as BullMQ connection options and sets maxRetriesPerRequest=null', async () => {
     const api = $workers()
     api.setConnection({ url: 'redis://localhost:6379/0', password: 'secret', db: 1 })
 
     const queue = api.createQueue('q2')
     const worker = api.createWorker('q2', async () => {})
 
-    expect(ioredisConstructorMock).toHaveBeenCalledTimes(1)
-    expect(ioredisConstructorMock).toHaveBeenCalledWith('redis://localhost:6379/0', expect.objectContaining({ password: 'secret', db: 1, maxRetriesPerRequest: null }))
-    expect((queue).opts.connection).toBeDefined()
-    expect((worker).opts.connection).toBeDefined()
+    expect((queue).opts.connection).toEqual(expect.objectContaining({
+      url: 'redis://localhost:6379/0',
+      password: 'secret',
+      db: 1,
+      maxRetriesPerRequest: null,
+    }))
+    expect((worker).opts.connection).toEqual((queue).opts.connection)
   })
 
   it('registry can store heterogeneous generic instances safely', async () => {
