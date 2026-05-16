@@ -8,6 +8,8 @@ Queues and workers connect via `useRuntimeConfig().redis` in `resolveConnection(
 
 Nuxt only applies env overrides at runtime for variables that match declared `runtimeConfig` keys and use the [`NUXT_` prefix](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables). After `nuxi build`, your project [`.env` file is not read`](https://nuxt.com/docs/4.x/directory-structure/env#production) — you must set variables in the host environment (Docker `environment:`, Kubernetes secrets, etc.).
 
+Using Valkey? Read [this thread](https://github.com/taskforcesh/bullmq/issues/3083).
+
 ## Environment variables
 
 | Runtime config key | Build / dev (`nuxi dev`, `nuxi build`) | Runtime (production server) |

@@ -57,11 +57,9 @@ export default defineNuxtConfig({
 })
 ```
 
-Configure Redis via [runtime config](https://nuxt.com/docs/4.x/guide/going-further/runtime-config): **`REDIS_*` in dev/build**, **`NUXT_REDIS_*` at runtime** ([details](#redis-configuration) · [docs](https://aidanhibbard.github.io/nuxt-processor/redis)). API: [docs/API](https://aidanhibbard.github.io/nuxt-processor/api).
-
 ## Redis configuration
 
-Queues and workers use `useRuntimeConfig().redis`.
+Using Valkey? Read [this thread](https://github.com/taskforcesh/bullmq/issues/3083).
 
 | Config key | Dev / build | Runtime (production / Docker) |
 | --- | --- | --- |
@@ -74,19 +72,24 @@ Queues and workers use `useRuntimeConfig().redis`.
 | `redis.lazyConnect` | `REDIS_LAZY_CONNECT` | `NUXT_REDIS_LAZY_CONNECT` |
 | `redis.connectTimeout` | `REDIS_CONNECT_TIMEOUT` | `NUXT_REDIS_CONNECT_TIMEOUT` |
 
-**Why two names?** Nuxt only overrides `runtimeConfig` at runtime with the [`NUXT_` prefix](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables). After `nuxi build`, [`.env` is not loaded`](https://nuxt.com/docs/4.x/directory-structure/env#production) — in Docker you must set `NUXT_REDIS_*` on the running container (or bake `REDIS_*` in at build time).
+Configure Redis via [runtime config](https://nuxt.com/docs/4.x/guide/going-further/runtime-config): **`REDIS_*` in dev/build**, **`NUXT_REDIS_*` at runtime** ([details](#redis-configuration) · [docs](https://aidanhibbard.github.io/nuxt-processor/redis)). API: [docs/API](https://aidanhibbard.github.io/nuxt-processor/api).
+
+**Dev / build** — in [`.env`](https://nuxt.com/docs/4.x/directory-structure/env) (loaded by the Nuxt CLI during `nuxi dev` and `nuxi build`):
 
 ```ini
-# .env — loaded by Nuxt CLI during nuxi dev / nuxi build
 REDIS_URL=redis://127.0.0.1:6379/0
-# Optional (same as 0.x): REDIS_USERNAME, REDIS_LAZY_CONNECT=true, REDIS_CONNECT_TIMEOUT=10000
 ```
 
+Optional (same as 0.x): `REDIS_USERNAME`, `REDIS_LAZY_CONNECT=true`, `REDIS_CONNECT_TIMEOUT=10000`. See [Redis configuration](https://aidanhibbard.github.io/nuxt-processor/redis#connection-options-0x-parity).
+
+**Docker / production** — set [`NUXT_REDIS_*` on the running container](https://nuxt.com/docs/4.x/directory-structure/env#production) on **both** the app and workers services ([details](https://aidanhibbard.github.io/nuxt-processor/redis#nuxt_redis--runtime-only)):
+
 ```yaml
-# Docker Compose — runtime env on app and workers (see Nuxt production env docs)
 environment:
   NUXT_REDIS_URL: redis://redis:6379/0
 ```
+
+Or when starting the built server directly:
 
 ```bash
 NUXT_REDIS_URL=redis://127.0.0.1:6379/0 node .output/server/workers/index.mjs
