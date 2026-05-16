@@ -1,5 +1,7 @@
 # Nuxt Processor
 
+**Using an LLM?** Documentation markdown is included in the package at `node_modules/nuxt-processor/docs/` (for example `redis.md`, `api.md`, `upgrading.md`).
+
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
 [![License][license-src]][license-href]

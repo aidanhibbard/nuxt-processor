@@ -28,7 +28,8 @@
   },
   "files": [
     "dist",
-    "bin"
+    "bin",
+    "docs/**/*.md"
   ],
   "scripts": {
     "prepack": "nuxt-module-build build",
