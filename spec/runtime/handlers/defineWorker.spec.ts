@@ -1,7 +1,13 @@
-import { describe, it, expect, vi, expectTypeOf } from 'vitest'
+import { describe, it, expect, vi, expectTypeOf, beforeEach } from 'vitest'
 
 import { defineWorker } from '../../../src/runtime/server/handlers/defineWorker'
-import { $workers, type Processor } from '../../../src/runtime/server/utils/workers'
+import { useProcessor, type Processor, type WorkerOptions } from '../../../src/runtime/server/utils/workers'
+
+const useRuntimeConfig = vi.fn()
+
+vi.mock('nitropack/runtime', () => ({
+  useRuntimeConfig: () => useRuntimeConfig(),
+}))
 
 vi.mock('bullmq', () => {
   class MockWorker {
@@ -22,23 +28,29 @@ vi.mock('bullmq', () => {
 })
 
 describe('defineWorker', () => {
-  it('creates a worker using $workers and returns it', async () => {
-    const api = $workers()
-    const connection = { host: 'localhost', port: 6379 }
-    api.setConnection(connection)
+  beforeEach(() => {
+    useRuntimeConfig.mockReturnValue({ redis: { host: 'localhost', port: 6379 } })
+  })
+
+  it('creates a worker using runtimeConfig redis', async () => {
+    const api = useProcessor()
 
     const worker = defineWorker({ name: 'email', processor: async () => {}, options: { concurrency: 2 } })
 
     expect(worker.name).toBe('email')
-    expect((worker).opts.connection).toEqual(expect.objectContaining(connection))
-    expect((worker).opts.autorun).toBe(false)
+    expect(worker.opts.connection).toEqual(expect.objectContaining({
+      host: 'localhost',
+      port: 6379,
+      lazyConnect: true,
+      maxRetriesPerRequest: null,
+    }))
+    expect(worker.opts.autorun).toBe(false)
 
     await api.stopAll()
   })
 
   it('supports typed name, data and result through generics', async () => {
-    const api = $workers()
-    api.setConnection({ host: 'localhost', port: 6379 })
+    const api = useProcessor()
 
     type Name = 'hello'
     type Data = { x: number }
@@ -53,13 +65,11 @@ describe('defineWorker', () => {
       },
     })
 
-    // Worker instance .name is exposed as string by BullMQ; type-level checks are done via job
     await api.stopAll()
   })
 
   it('works without generics (any types)', async () => {
-    const api = $workers()
-    api.setConnection({ host: 'localhost', port: 6379 })
+    const api = useProcessor()
 
     const worker = defineWorker({
       name: 'plain',

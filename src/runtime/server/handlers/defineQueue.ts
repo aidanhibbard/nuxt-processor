@@ -1,5 +1,5 @@
 import type { Queue, QueueOptions, JobsOptions } from '../utils/workers'
-import { $workers } from '../utils/workers'
+import { useProcessor } from '../utils/workers'
 
 type DefineQueueArgs<DefaultNameType extends string = string> = {
   name: DefaultNameType
@@ -13,7 +13,7 @@ export function defineQueue<
   DefaultResultType = any,
   DefaultNameType extends string = string,
 >({ name, options }: DefineQueueArgs<DefaultNameType>): Queue<DataTypeOrJob, DefaultResultType, DefaultNameType> {
-  const { createQueue } = $workers()
+  const { createQueue } = useProcessor()
   return createQueue<DataTypeOrJob, DefaultResultType, DefaultNameType>(name, options)
 }
 

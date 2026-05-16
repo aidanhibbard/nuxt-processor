@@ -1,6 +1,12 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-import { $workers, type Processor } from '../../../src/runtime/server/utils/workers'
+import { useProcessor, type Processor } from '../../../src/runtime/server/utils/workers'
+
+const useRuntimeConfig = vi.fn()
+
+vi.mock('nitropack/runtime', () => ({
+  useRuntimeConfig: () => useRuntimeConfig(),
+}))
 
 vi.mock('bullmq', () => {
   class MockQueue {
@@ -32,71 +38,93 @@ vi.mock('bullmq', () => {
   return { Queue: MockQueue, Worker: MockWorker }
 })
 
-describe('$workers registry', () => {
-  it('creates queues and workers with shared connection and autorun=false', async () => {
-    const api = $workers()
-    const connection = { host: '127.0.0.1', port: 6379 }
-    api.setConnection(connection)
+describe('useProcessor registry', () => {
+  beforeEach(() => {
+    useRuntimeConfig.mockReturnValue({ redis: { host: '127.0.0.1', port: 6379 } })
+  })
+
+  it('creates queues and workers from runtimeConfig with lazyConnect and autorun=false', async () => {
+    const api = useProcessor()
 
     const queue = api.createQueue('test-queue', { defaultJobOptions: { attempts: 2 } })
     const worker = api.createWorker('test-queue', async () => {}, { concurrency: 3 })
 
     expect(queue.name).toBe('test-queue')
-    expect((queue.opts.connection)).toEqual(expect.objectContaining(connection))
+    expect(queue.opts.connection).toEqual(expect.objectContaining({
+      host: '127.0.0.1',
+      port: 6379,
+      lazyConnect: true,
+    }))
     expect((queue.opts.connection as unknown as { maxRetriesPerRequest?: unknown }).maxRetriesPerRequest).toBeUndefined()
     expect(worker.name).toBe('test-queue')
-    expect((worker).opts.connection).toEqual(expect.objectContaining(connection))
-    expect(((worker).opts.connection as unknown as { maxRetriesPerRequest: unknown }).maxRetriesPerRequest).toBeNull()
-    expect((worker).opts.autorun).toBe(false)
+    expect(worker.opts.connection).toEqual(expect.objectContaining({
+      host: '127.0.0.1',
+      port: 6379,
+      lazyConnect: true,
+    }))
+    expect(worker.opts.autorun).toBe(false)
 
     expect(api.queues).toContain(queue)
     expect(api.workers).toContain(worker)
 
     await api.stopAll()
-    expect((queue).close).toHaveBeenCalled()
-    expect((worker).close).toHaveBeenCalled()
+    expect(queue.close).toHaveBeenCalled()
+    expect(worker.close).toHaveBeenCalled()
   })
 
-  it('passes a connection url string through as BullMQ connection options', async () => {
-    const api = $workers()
-    api.setConnection('redis://user:pass@localhost:6379/0')
+  it('uses redis.url from runtimeConfig (e.g. NUXT_REDIS_URL at runtime)', async () => {
+    useRuntimeConfig.mockReturnValue({
+      redis: {
+        host: '127.0.0.1',
+        port: 6379,
+        url: 'redis://user:pass@localhost:6379/0',
+      },
+    })
 
+    const api = useProcessor()
     const queue = api.createQueue('q1')
     const worker = api.createWorker('q1', async () => {})
 
-    expect((queue).opts.connection).toEqual({
+    expect(queue.opts.connection).toEqual({
+      host: '127.0.0.1',
+      port: 6379,
       url: 'redis://user:pass@localhost:6379/0',
+      lazyConnect: true,
     })
-    expect((worker).opts.connection).toEqual({
+    expect(worker.opts.connection).toEqual({
+      host: '127.0.0.1',
+      port: 6379,
       url: 'redis://user:pass@localhost:6379/0',
-      maxRetriesPerRequest: null,
+      lazyConnect: true,
     })
   })
 
-  it('passes an object with url property through for queues and sets maxRetriesPerRequest=null for workers', async () => {
-    const api = $workers()
-    api.setConnection({ url: 'redis://localhost:6379/0', password: 'secret', db: 1 })
+  it('passes runtimeConfig url and options through for queues and workers', async () => {
+    useRuntimeConfig.mockReturnValue({
+      redis: { url: 'redis://localhost:6379/0', password: 'secret', db: 1 },
+    })
 
+    const api = useProcessor()
     const queue = api.createQueue('q2')
     const worker = api.createWorker('q2', async () => {})
 
-    expect((queue).opts.connection).toEqual(expect.objectContaining({
+    expect(queue.opts.connection).toEqual(expect.objectContaining({
       url: 'redis://localhost:6379/0',
       password: 'secret',
       db: 1,
+      lazyConnect: true,
     }))
-    expect(((queue).opts.connection as unknown as { maxRetriesPerRequest?: unknown }).maxRetriesPerRequest).toBeUndefined()
-    expect((worker).opts.connection).toEqual(expect.objectContaining({
+    expect((queue.opts.connection as unknown as { maxRetriesPerRequest?: unknown }).maxRetriesPerRequest).toBeUndefined()
+    expect(worker.opts.connection).toEqual(expect.objectContaining({
       url: 'redis://localhost:6379/0',
       password: 'secret',
       db: 1,
-      maxRetriesPerRequest: null,
+      lazyConnect: true,
     }))
   })
 
   it('registry can store heterogeneous generic instances safely', async () => {
-    const api = $workers()
-    api.setConnection({ host: '127.0.0.1', port: 6379 })
+    const api = useProcessor()
 
     const q1 = api.createQueue<'n1'>('n1')
     const q2 = api.createQueue<{ foo: string }, { bar: number }, 'n2'>('n2')
@@ -105,8 +133,6 @@ describe('$workers registry', () => {
 
     expect(api.queues).toEqual(expect.arrayContaining([q1, q2]))
     expect(api.workers).toEqual(expect.arrayContaining([w1, w2]))
-
-    // Instance .name is string at runtime; rely on compile-time checks via generics and method args
 
     await api.stopAll()
   })

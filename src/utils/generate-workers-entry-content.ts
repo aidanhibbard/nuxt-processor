@@ -4,16 +4,10 @@ export function generateWorkersEntryContent(workerFiles: string[]): string {
 import { fileURLToPath } from 'node:url'
 import { resolve as resolvePath } from 'node:path'
 import { consola } from 'consola'
-import { useRuntimeConfig } from '#imports'
-import { $workers } from '#processor-utils'
-
-// Initialize connection as early as possible so any imports that register
-// workers/queues have a valid connection available.
-const api = $workers()
-const { redis } = useRuntimeConfig()
-api.setConnection(process.env.REDIS_URL ? { ...redis, url: process.env.REDIS_URL } : redis)
+import { useProcessor } from '#processor-utils'
 
 export async function createWorkersApp() {
+const api = useProcessor()
 // Avoid EPIPE when stdout/stderr are closed by terminal (e.g., Ctrl+C piping)
 const handleStreamError = (err) => {
 try {

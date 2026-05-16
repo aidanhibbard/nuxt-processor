@@ -1,8 +1,17 @@
-import type { Job, JobsOptions, QueueOptions, WorkerOptions, Processor, RedisOptions } from 'bullmq'
+import type { Job, JobsOptions, QueueOptions, WorkerOptions, Processor, ConnectionOptions } from 'bullmq'
 import { Queue, Worker } from 'bullmq'
+import { useRuntimeConfig } from 'nitropack/runtime'
+
+function resolveConnection(): ConnectionOptions {
+  const { redis } = useRuntimeConfig()
+
+  return {
+    ...redis,
+    lazyConnect: true,
+  }
+}
 
 interface WorkersRegistry {
-  connection?: QueueOptions['connection']
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   queues: Array<Queue<any, any, any>>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -10,35 +19,11 @@ interface WorkersRegistry {
 }
 
 const registry: WorkersRegistry = {
-  connection: undefined,
   queues: [],
   workers: [],
 }
 
-export function $workers() {
-  type ConnectionInput = QueueOptions['connection'] | RedisOptions | string
-
-  function setConnection(connection: ConnectionInput) {
-    if (connection && typeof connection === 'object' && 'url' in connection && connection.url) {
-      registry.connection = connection
-    }
-    else if (typeof connection === 'string') {
-      registry.connection = { url: connection }
-    }
-    else {
-      registry.connection = connection as QueueOptions['connection']
-    }
-  }
-
-  function getWorkerConnection() {
-    if (!registry.connection) return registry.connection
-
-    return {
-      ...(registry.connection as RedisOptions),
-      maxRetriesPerRequest: null,
-    } as QueueOptions['connection']
-  }
-
+export function useProcessor() {
   function createQueue<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     DataTypeOrJob = any,
@@ -50,7 +35,7 @@ export function $workers() {
     options?: Omit<QueueOptions, 'connection'> & { defaultJobOptions?: JobsOptions },
   ): Queue<DataTypeOrJob, DefaultResultType, DefaultNameType> {
     const queue = new Queue<DataTypeOrJob, DefaultResultType, DefaultNameType>(name, {
-      connection: registry.connection as QueueOptions['connection'],
+      connection: resolveConnection(),
       ...options,
     })
     registry.queues.push(queue)
@@ -69,7 +54,7 @@ export function $workers() {
     options?: Omit<WorkerOptions, 'connection'>,
   ): Worker<DataType, ResultType, NameType> {
     const worker = new Worker<DataType, ResultType, NameType>(name, processor, {
-      connection: getWorkerConnection() as WorkerOptions['connection'],
+      connection: resolveConnection(),
       ...options,
       autorun: false,
     })
@@ -83,13 +68,11 @@ export function $workers() {
   }
 
   return {
-    setConnection,
     createQueue,
     createWorker,
     stopAll,
     get queues() { return registry.queues },
     get workers() { return registry.workers },
-    get connection() { return registry.connection },
   }
 }
 
