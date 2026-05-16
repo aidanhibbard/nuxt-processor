@@ -1,6 +1,5 @@
 import { defineNuxtModule, createResolver, addTypeTemplate } from '@nuxt/kit'
 import { name, version, configKey, compatibility } from '../package.json'
-import type { RedisOptions as BullRedisOptions } from 'bullmq'
 import type { Plugin } from 'rollup'
 import { relative } from 'node:path'
 import scanFolder from './utils/scan-folder'
@@ -28,16 +27,15 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
-    const runtimeConfig = nuxt.options.runtimeConfig as typeof nuxt.options.runtimeConfig & {
-      redis?: BullRedisOptions & { url?: string }
-    }
-    runtimeConfig.redis = {
-      host: '127.0.0.1',
-      port: 6379,
-      password: '',
-      db: 0,
+    // Keys must exist for NUXT_REDIS_* env overrides (Nitro applyEnv). Empty values are
+    // stripped in resolveConnection() so ioredis keeps its own defaults (127.0.0.1:6379).
+    nuxt.options.runtimeConfig.redis = {
       url: '',
-      ...(runtimeConfig.redis ?? {}),
+      host: '',
+      port: '',
+      password: '',
+      db: '',
+      ...(nuxt.options.runtimeConfig.redis ?? {}),
     }
 
     nuxt.options.alias = nuxt.options.alias ?? {}

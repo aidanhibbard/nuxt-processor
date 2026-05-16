@@ -3,12 +3,19 @@ import { Queue, Worker } from 'bullmq'
 import { useRuntimeConfig } from 'nitropack/runtime'
 
 function resolveConnection(): ConnectionOptions {
-  const { redis } = useRuntimeConfig()
+  const { redis } = useRuntimeConfig() as { redis?: Record<string, unknown> }
+  const connection: Record<string, unknown> = { lazyConnect: true }
 
-  return {
-    ...redis,
-    lazyConnect: true,
+  if (redis) {
+    for (const [key, value] of Object.entries(redis)) {
+      if (value === '' || value === undefined || value === null) {
+        continue
+      }
+      connection[key] = value
+    }
   }
+
+  return connection as ConnectionOptions
 }
 
 interface WorkersRegistry {
