@@ -19,14 +19,9 @@ describe('buildRedisRuntimeConfig', () => {
   })
 
   it('seeds empty keys when env is unset', () => {
-    vi.stubEnv('REDIS_URL', '')
-    vi.stubEnv('REDIS_HOST', '')
-    vi.stubEnv('REDIS_PORT', '')
-    vi.stubEnv('REDIS_PASSWORD', '')
-    vi.stubEnv('REDIS_DB', '')
-    vi.stubEnv('REDIS_USERNAME', '')
-    vi.stubEnv('REDIS_LAZY_CONNECT', '')
-    vi.stubEnv('REDIS_CONNECT_TIMEOUT', '')
+    for (const key of envKeys) {
+      vi.stubEnv(key, '')
+    }
 
     expect(buildRedisRuntimeConfig(undefined)).toEqual({
       url: '',
