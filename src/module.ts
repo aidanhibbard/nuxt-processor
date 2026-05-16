@@ -1,4 +1,5 @@
 import { defineNuxtModule, createResolver, addTypeTemplate } from '@nuxt/kit'
+import { defu } from 'defu'
 import { name, version, configKey, compatibility } from '../package.json'
 import type { Plugin } from 'rollup'
 import { relative } from 'node:path'
@@ -29,14 +30,17 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Register keys for NUXT_REDIS_* at runtime; seed defaults from REDIS_* during dev/build.
     // Empty values are stripped in resolveConnection() so ioredis can use its own defaults.
-    nuxt.options.runtimeConfig.redis = {
-      url: process.env.REDIS_URL ?? '',
-      host: process.env.REDIS_HOST ?? '',
-      port: process.env.REDIS_PORT ?? '',
-      password: process.env.REDIS_PASSWORD ?? '',
-      db: process.env.REDIS_DB ?? '',
-      ...(nuxt.options.runtimeConfig.redis ?? {}),
-    }
+    nuxt.options.runtimeConfig.redis = defu(
+      // User could be giving us a grapefruit here for all we know
+      nuxt.options.runtimeConfig.redis as any,
+      {
+        url: process.env.REDIS_URL ?? '',
+        host: process.env.REDIS_HOST ?? '',
+        port: process.env.REDIS_PORT ?? '',
+        password: process.env.REDIS_PASSWORD ?? '',
+        db: process.env.REDIS_DB ?? '',
+      }
+    )
 
     nuxt.options.alias = nuxt.options.alias ?? {}
     nuxt.options.alias['nuxt-processor'] = resolve('./runtime/server/handlers')
