@@ -12,6 +12,7 @@ export default defineConfig({
       { text: 'Getting Started', link: '/getting-started' },
       { text: 'API', link: '/api' },
       { text: 'Redis', link: '/redis' },
+      { text: 'Upgrading', link: '/upgrading' },
     ],
 
     sidebar: [
@@ -19,6 +20,7 @@ export default defineConfig({
         text: 'Guide',
         items: [
           { text: 'Getting Started', link: '/getting-started' },
+          { text: 'Upgrading from 0.x', link: '/upgrading' },
           { text: 'Redis configuration', link: '/redis' },
           { text: 'Define Queue', link: '/define-queue' },
           { text: 'Define Worker', link: '/define-worker' },

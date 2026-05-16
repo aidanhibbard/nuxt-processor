@@ -11,6 +11,8 @@
 
 Note: This package is under very active development! Please consider creating issues if you run into anything!
 
+**Upgrading from 0.x?** Redis config and the workers registry changed in v1 — see the [upgrading guide](https://aidanhibbard.github.io/nuxt-processor/upgrading).
+
 - [✨ &nbsp;Release Notes](/CHANGELOG.md)
 - [📖 &nbsp;Documentation](https://aidanhibbard.github.io/nuxt-processor/)
 
@@ -31,6 +33,7 @@ Note: This package is under very active development! Please consider creating is
 ## Sections
 
 - [Install](#install)
+- [Upgrading from 0.x](https://aidanhibbard.github.io/nuxt-processor/upgrading)
 - [Redis configuration](#redis-configuration)
 - [Define a queue and enqueue from your app](#define-a-queue-and-enqueue-from-your-app)
 - [Define a worker](#define-a-worker)

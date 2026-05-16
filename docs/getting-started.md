@@ -4,6 +4,10 @@ title: Getting Started
 
 # Getting Started
 
+::: info Upgrading from 0.x
+If you used `processor.redis`, `$workers()`, or `setConnection()`, read [Upgrading from 0.x](/upgrading) first.
+:::
+
 ## Install
 
 ```bash
