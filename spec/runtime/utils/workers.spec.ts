@@ -99,6 +99,83 @@ describe('useProcessor registry', () => {
     })
   })
 
+  it('passes username, lazyConnect, and connectTimeout from runtimeConfig', async () => {
+    useRuntimeConfig.mockReturnValue({
+      redis: {
+        host: 'redis.internal',
+        port: 6381,
+        username: 'acl-user',
+        lazyConnect: false,
+        connectTimeout: 12_000,
+      },
+    })
+
+    const api = useProcessor()
+    const queue = api.createQueue('opts-queue')
+    const worker = api.createWorker('opts-queue', async () => {})
+
+    expect(queue.opts.connection).toEqual({
+      host: 'redis.internal',
+      port: 6381,
+      username: 'acl-user',
+      lazyConnect: false,
+      connectTimeout: 12_000,
+    })
+    expect(worker.opts.connection).toEqual(queue.opts.connection)
+
+    await api.stopAll()
+  })
+
+  it('defaults lazyConnect to true when redis.lazyConnect is empty', async () => {
+    useRuntimeConfig.mockReturnValue({
+      redis: {
+        host: '127.0.0.1',
+        port: 6379,
+        lazyConnect: '',
+      },
+    })
+
+    const api = useProcessor()
+    const queue = api.createQueue('lazy-default')
+
+    expect(queue.opts.connection).toEqual({
+      host: '127.0.0.1',
+      port: 6379,
+      lazyConnect: true,
+    })
+
+    await api.stopAll()
+  })
+
+  it('strips empty redis fields so they do not appear on the connection', async () => {
+    useRuntimeConfig.mockReturnValue({
+      redis: {
+        url: '',
+        host: '127.0.0.1',
+        port: 6379,
+        password: '',
+        username: '',
+        db: '',
+        connectTimeout: '',
+      },
+    })
+
+    const api = useProcessor()
+    const queue = api.createQueue('strip-empty')
+
+    expect(queue.opts.connection).toEqual({
+      host: '127.0.0.1',
+      port: 6379,
+      lazyConnect: true,
+    })
+    expect(queue.opts.connection).not.toHaveProperty('url')
+    expect(queue.opts.connection).not.toHaveProperty('password')
+    expect(queue.opts.connection).not.toHaveProperty('username')
+    expect(queue.opts.connection).not.toHaveProperty('connectTimeout')
+
+    await api.stopAll()
+  })
+
   it('passes runtimeConfig url and options through for queues and workers', async () => {
     useRuntimeConfig.mockReturnValue({
       redis: { url: 'redis://localhost:6379/0', password: 'secret', db: 1 },

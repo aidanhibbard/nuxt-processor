@@ -70,12 +70,16 @@ Queues and workers use `useRuntimeConfig().redis`.
 | `redis.port` | `REDIS_PORT` | `NUXT_REDIS_PORT` |
 | `redis.password` | `REDIS_PASSWORD` | `NUXT_REDIS_PASSWORD` |
 | `redis.db` | `REDIS_DB` | `NUXT_REDIS_DB` |
+| `redis.username` | `REDIS_USERNAME` | `NUXT_REDIS_USERNAME` |
+| `redis.lazyConnect` | `REDIS_LAZY_CONNECT` | `NUXT_REDIS_LAZY_CONNECT` |
+| `redis.connectTimeout` | `REDIS_CONNECT_TIMEOUT` | `NUXT_REDIS_CONNECT_TIMEOUT` |
 
 **Why two names?** Nuxt only overrides `runtimeConfig` at runtime with the [`NUXT_` prefix](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables). After `nuxi build`, [`.env` is not loaded`](https://nuxt.com/docs/4.x/directory-structure/env#production) — in Docker you must set `NUXT_REDIS_*` on the running container (or bake `REDIS_*` in at build time).
 
 ```ini
 # .env — loaded by Nuxt CLI during nuxi dev / nuxi build
 REDIS_URL=redis://127.0.0.1:6379/0
+# Optional (same as 0.x): REDIS_USERNAME, REDIS_LAZY_CONNECT=true, REDIS_CONNECT_TIMEOUT=10000
 ```
 
 ```yaml

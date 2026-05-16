@@ -17,6 +17,9 @@ Nuxt only applies env overrides at runtime for variables that match declared `ru
 | `redis.port` | `REDIS_PORT` | `NUXT_REDIS_PORT` |
 | `redis.password` | `REDIS_PASSWORD` | `NUXT_REDIS_PASSWORD` |
 | `redis.db` | `REDIS_DB` | `NUXT_REDIS_DB` |
+| `redis.username` | `REDIS_USERNAME` | `NUXT_REDIS_USERNAME` |
+| `redis.lazyConnect` | `REDIS_LAZY_CONNECT` (`true` / omitted) | `NUXT_REDIS_LAZY_CONNECT` |
+| `redis.connectTimeout` | `REDIS_CONNECT_TIMEOUT` (ms) | `NUXT_REDIS_CONNECT_TIMEOUT` |
 
 ### `REDIS_*` — build and dev
 
@@ -24,6 +27,10 @@ Read when the module runs (during `nuxi dev`, `nuxi build`, or `nuxi prepare`). 
 
 ```ini
 REDIS_URL=redis://127.0.0.1:6379/0
+# Optional (same names as 0.x processor.redis)
+REDIS_USERNAME=myuser
+REDIS_LAZY_CONNECT=true
+REDIS_CONNECT_TIMEOUT=10000
 ```
 
 Values are merged into `runtimeConfig.redis` and baked into the Nitro output. They apply at runtime **unless** overridden by `NUXT_REDIS_*`.
@@ -92,9 +99,21 @@ export default defineNuxtConfig({
 })
 ```
 
+## Connection options (0.x parity)
+
+These were supported on `processor.redis` in 0.x and map to the same [ioredis / BullMQ `RedisOptions`](https://github.com/redis/ioredis/blob/master/docs/interfaces/CommonRedisOptions.md) fields on `runtimeConfig.redis`:
+
+| Option | Env (build) | Env (runtime) | Notes |
+| --- | --- | --- | --- |
+| `username` | `REDIS_USERNAME` | `NUXT_REDIS_USERNAME` | Redis ACL user (Redis 6+) |
+| `lazyConnect` | `REDIS_LAZY_CONNECT=true` | `NUXT_REDIS_LAZY_CONNECT` | When unset, queues/workers still default to `lazyConnect: true` in `resolveConnection()` so Redis is not contacted during `nuxi build` |
+| `connectTimeout` | `REDIS_CONNECT_TIMEOUT` | `NUXT_REDIS_CONNECT_TIMEOUT` | Milliseconds |
+
+You can also set any of these in `runtimeConfig.redis` in `nuxt.config` (wins over `REDIS_*` at build).
+
 ## Defaults
 
-The module sets `lazyConnect: true` on queue/worker connections so Redis is not contacted during the Nuxt build. If no options apply after the precedence above, [ioredis](https://github.com/redis/ioredis) uses its defaults.
+If no host/url/port options apply after the precedence above, [ioredis](https://github.com/redis/ioredis) uses `127.0.0.1:6379`. Empty strings in config are ignored so unset keys do not block fallbacks.
 
 ## Module options
 

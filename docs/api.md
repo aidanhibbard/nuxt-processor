@@ -52,7 +52,7 @@ interface RuntimeConfig {
 }
 ```
 
-The module registers `url`, `host`, `port`, `password`, and `db`, seeds them from `REDIS_*` at dev/build, and allows `NUXT_REDIS_*` overrides at runtime. See [Redis configuration](/redis).
+The module registers `url`, `host`, `port`, `password`, `db`, `username`, `lazyConnect`, and `connectTimeout`, seeds them from `REDIS_*` at dev/build, and allows `NUXT_REDIS_*` overrides at runtime. See [Redis configuration](/redis).
 
 ---
 

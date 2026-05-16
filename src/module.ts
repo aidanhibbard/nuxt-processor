@@ -1,6 +1,6 @@
 import { defineNuxtModule, createResolver, addTypeTemplate } from '@nuxt/kit'
-import { defu } from 'defu'
 import { name, version, configKey, compatibility } from '../package.json'
+import { buildRedisRuntimeConfig } from './utils/redis-runtime-config'
 import type { Plugin } from 'rollup'
 import { relative } from 'node:path'
 import scanFolder from './utils/scan-folder'
@@ -30,15 +30,8 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Register keys for NUXT_REDIS_* at runtime; seed defaults from REDIS_* during dev/build.
     // Empty values are stripped in resolveConnection() so ioredis can use its own defaults.
-    nuxt.options.runtimeConfig.redis = defu(
+    nuxt.options.runtimeConfig.redis = buildRedisRuntimeConfig(
       nuxt.options.runtimeConfig.redis as Record<string, unknown> | undefined,
-      {
-        url: process.env.REDIS_URL ?? '',
-        host: process.env.REDIS_HOST ?? '',
-        port: process.env.REDIS_PORT ?? '',
-        password: process.env.REDIS_PASSWORD ?? '',
-        db: process.env.REDIS_DB ?? '',
-      },
     )
 
     nuxt.options.alias = nuxt.options.alias ?? {}

@@ -40,7 +40,7 @@ This matches how Nuxt apps are deployed everywhere else and removes special-casi
 | `setConnection()` | Not needed — connection comes from `useRuntimeConfig().redis` |
 | Nitro plugin that called `setConnection` | Removed |
 | Runtime override via bare `REDIS_URL` only | `NUXT_REDIS_URL` at runtime, or `REDIS_URL` at **build** time |
-| `processor.redis` options: `username`, `lazyConnect`, `connectTimeout` in module defaults | Set via `runtimeConfig.redis` or BullMQ `options` if required |
+| `processor.redis.username`, `lazyConnect`, `connectTimeout` | `runtimeConfig.redis` and/or `REDIS_*` / `NUXT_REDIS_*` (see [Redis configuration](/redis#connection-options-0x-parity)) |
 
 `defineQueue` and `defineWorker` imports from `#processor` are unchanged.
 
