@@ -42,7 +42,6 @@ describe('defineWorker', () => {
       host: 'localhost',
       port: 6379,
       lazyConnect: true,
-      maxRetriesPerRequest: null,
     }))
     expect(worker.opts.autorun).toBe(false)
 
