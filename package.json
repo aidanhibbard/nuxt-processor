@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@nuxt/kit": "^4.4.5",
-    "bullmq": "^5.76.7",
+    "bullmq": "^5.76.9",
     "citty": "^0.2.2",
     "consola": "^3.4.2",
     "defu": "^6.1.7",
@@ -67,7 +67,6 @@
     "@nuxt/test-utils": "^4.0.3",
     "@types/node": "latest",
     "@vitest/coverage-v8": "^4.1.5",
-    "baseline-browser-mapping": "^2.10.30",
     "changelogen": "^0.6.2",
     "eslint": "^10.3.0",
     "happy-dom": "^20.9.0",

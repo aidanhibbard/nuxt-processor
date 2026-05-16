@@ -1,3 +1,56 @@
+## v1.2.0
+
+[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v1.1.0...HEAD)
+
+### ⚠️ Breaking Changes
+
+- **Redis configuration** — remove `processor.redis` from module options; use `runtimeConfig.redis` and/or `REDIS_*` (dev/build) and `NUXT_REDIS_*` (runtime). See [upgrading guide](https://aidanhibbard.github.io/nuxt-processor/upgrading).
+- **Workers registry** — rename `$workers()` to `useProcessor()`; remove `setConnection()`. Connection is resolved from `useRuntimeConfig().redis` when each queue or worker is created.
+- **Nitro plugin** — remove the plugin that called `setConnection()` and overrode `process.env.REDIS_URL` at runtime.
+- **Worker entry** — generated workers bundle no longer calls `setConnection()` at startup; Redis comes from runtime config like the main server.
+
+### 🚀 Enhancements
+
+- Resolve Redis at queue/worker creation time (fixes `ECONNREFUSED 127.0.0.1:6379` when queues are imported before a Nitro plugin runs, e.g. Bull Board or Docker).
+- Add `buildRedisRuntimeConfig()` with `defu` merge: user `runtimeConfig.redis` overrides `REDIS_*` env at module setup.
+- Set `maxRetriesPerRequest: null` on worker connections only (BullMQ blocking client requirement).
+- Ship markdown docs in the npm package under `docs/` for tooling and LLMs.
+
+### 📖 Documentation
+
+- Add `docs/redis.md`, `docs/api.md`, and `docs/upgrading.md`; expand README with env tables and Docker notes.
+- Document `NUXT_REDIS_*` vs `REDIS_*` per [Nuxt runtime config](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables).
+
+### 🧪 Tests
+
+- Add `spec/utils/redis-runtime-config.spec.ts`; expand `spec/runtime/utils/workers.spec.ts` for connection options and worker `maxRetriesPerRequest`.
+
+### 💅 Refactors
+
+- Remove `.npmrc` pnpm-only keys from the published package root.
+
+## v1.1.0
+
+[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v1.0.0...v1.1.0)
+
+### 🩹 Fixes
+
+- Drop direct `ioredis` dependency; use BullMQ’s bundled connection stack ([#53](https://github.com/aidanhibbard/nuxt-processor/pull/53)).
+- Improve worker connection handling in `$workers()` (`maxRetriesPerRequest: null` for workers).
+
+## v1.0.0
+
+[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v0.0.15...v1.0.0)
+
+### 🚀 Enhancements
+
+- First stable `1.x` release line.
+- Merge `processor.redis` into `runtimeConfig.redis` at build time; env variable and CLI fixes ([#51](https://github.com/aidanhibbard/nuxt-processor/pull/51), [#52](https://github.com/aidanhibbard/nuxt-processor/pull/52)).
+
+### 🩹 Fixes
+
+- Upgrade `nuxt` from 4.1.2 to 4.2.2 ([#45](https://github.com/aidanhibbard/nuxt-processor/pull/45)).
+- Upgrade `@bull-board/h3` from 6.13.0 to 6.16.2 ([#47](https://github.com/aidanhibbard/nuxt-processor/pull/47)).
 
 ## v0.0.15
 

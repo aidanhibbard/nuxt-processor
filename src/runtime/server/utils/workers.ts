@@ -2,7 +2,7 @@ import type { Job, JobsOptions, QueueOptions, WorkerOptions, Processor, Connecti
 import { Queue, Worker } from 'bullmq'
 import { useRuntimeConfig } from 'nitropack/runtime'
 
-function resolveConnection(): ConnectionOptions {
+function resolveConnection(type: 'queue' | 'worker'): ConnectionOptions {
   const { redis } = useRuntimeConfig() as { redis?: Record<string, unknown> }
   const connection: Record<string, unknown> = { lazyConnect: true }
 
@@ -13,6 +13,10 @@ function resolveConnection(): ConnectionOptions {
       }
       connection[key] = value
     }
+  }
+
+  if (type === 'worker') {
+    connection.maxRetriesPerRequest = null
   }
 
   return connection as ConnectionOptions
@@ -42,7 +46,7 @@ export function useProcessor() {
     options?: Omit<QueueOptions, 'connection'> & { defaultJobOptions?: JobsOptions },
   ): Queue<DataTypeOrJob, DefaultResultType, DefaultNameType> {
     const queue = new Queue<DataTypeOrJob, DefaultResultType, DefaultNameType>(name, {
-      connection: resolveConnection(),
+      connection: resolveConnection('queue'),
       ...options,
     })
     registry.queues.push(queue)
@@ -61,7 +65,7 @@ export function useProcessor() {
     options?: Omit<WorkerOptions, 'connection'>,
   ): Worker<DataType, ResultType, NameType> {
     const worker = new Worker<DataType, ResultType, NameType>(name, processor, {
-      connection: resolveConnection(),
+      connection: resolveConnection('worker'),
       ...options,
       autorun: false,
     })

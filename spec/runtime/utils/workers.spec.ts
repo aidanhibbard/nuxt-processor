@@ -61,6 +61,7 @@ describe('useProcessor registry', () => {
       host: '127.0.0.1',
       port: 6379,
       lazyConnect: true,
+      maxRetriesPerRequest: null,
     }))
     expect(worker.opts.autorun).toBe(false)
 
@@ -96,6 +97,7 @@ describe('useProcessor registry', () => {
       port: 6379,
       url: 'redis://user:pass@localhost:6379/0',
       lazyConnect: true,
+      maxRetriesPerRequest: null,
     })
   })
 
@@ -121,7 +123,10 @@ describe('useProcessor registry', () => {
       lazyConnect: false,
       connectTimeout: 12_000,
     })
-    expect(worker.opts.connection).toEqual(queue.opts.connection)
+    expect(worker.opts.connection).toEqual({
+      ...queue.opts.connection,
+      maxRetriesPerRequest: null,
+    })
 
     await api.stopAll()
   })
@@ -197,6 +202,7 @@ describe('useProcessor registry', () => {
       password: 'secret',
       db: 1,
       lazyConnect: true,
+      maxRetriesPerRequest: null,
     }))
   })
 
