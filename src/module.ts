@@ -27,14 +27,14 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
-    // Keys must exist for NUXT_REDIS_* env overrides (Nitro applyEnv). Empty values are
-    // stripped in resolveConnection() so ioredis keeps its own defaults (127.0.0.1:6379).
+    // Register keys for NUXT_REDIS_* at runtime; seed defaults from REDIS_* during dev/build.
+    // Empty values are stripped in resolveConnection() so ioredis can use its own defaults.
     nuxt.options.runtimeConfig.redis = {
-      url: '',
-      host: '',
-      port: '',
-      password: '',
-      db: '',
+      url: process.env.REDIS_URL ?? '',
+      host: process.env.REDIS_HOST ?? '',
+      port: process.env.REDIS_PORT ?? '',
+      password: process.env.REDIS_PASSWORD ?? '',
+      db: process.env.REDIS_DB ?? '',
       ...(nuxt.options.runtimeConfig.redis ?? {}),
     }
 

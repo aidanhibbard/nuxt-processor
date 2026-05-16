@@ -10,35 +10,34 @@ title: Getting Started
 npx nuxi@latest module add nuxt-processor@latest
 ```
 
-Add the module in `nuxt.config.ts` and set your Redis connection.
+Add the module in `nuxt.config.ts`:
 
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
   modules: ['nuxt-processor'],
-  processor: {
-    redis: {
-      // Prefer a single URL if available (takes precedence over other fields)
-      // e.g. redis://user:pass@host:6379/0
-      url: process.env.REDIS_URL,
-      host: process.env.REDIS_HOST ?? '127.0.0.1',
-      port: Number(process.env.REDIS_PORT ?? 6379),
-      password: process.env.REDIS_PASSWORD ?? '',
-      username: process.env.REDIS_USERNAME,
-      db: Number(process.env.REDIS_DB ?? 0),
-      // Optional connection behavior
-      // Delay connecting until first Redis command (useful to avoid build-time connects)
-      lazyConnect: process.env.REDIS_LAZY_CONNECT
-        ? process.env.REDIS_LAZY_CONNECT === 'true'
-        : undefined,
-      // Milliseconds to wait before giving up when establishing the connection
-      connectTimeout: process.env.REDIS_CONNECT_TIMEOUT
-        ? Number(process.env.REDIS_CONNECT_TIMEOUT)
-        : undefined,
-    },
-  },
 })
 ```
+
+## Redis
+
+Configure Redis with [runtime config](https://nuxt.com/docs/4.x/guide/going-further/runtime-config).
+
+- **Dev / build:** `REDIS_*` in `.env` (loaded by `nuxi dev` / `nuxi build`) — see [Redis configuration](/redis).
+- **Production / Docker:** `NUXT_REDIS_*` at runtime — Nuxt only applies env overrides with the [`NUXT_` prefix](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables). After build, [`.env` is not read](https://nuxt.com/docs/4.x/directory-structure/env#production); set vars on the container (Compose `environment:`, K8s, etc.).
+
+```ini
+# .env (nuxi dev / nuxi build)
+REDIS_URL=redis://127.0.0.1:6379/0
+```
+
+```yaml
+# Docker — same NUXT_REDIS_* on app and workers services
+environment:
+  NUXT_REDIS_URL: redis://redis:6379/0
+```
+
+Full reference: [Redis configuration](/redis) · [API](/api).
 
 ## Define a queue and enqueue from your app
 
@@ -116,11 +115,11 @@ Then you can run:
 npm run processor:dev
 ```
 
-- After building for production, run workers from `.output/server/workers/index.mjs`:
+- After building for production, run workers with the same Redis env as your app. On **Docker deploys**, use `NUXT_REDIS_*` on both containers ([Nuxt production env](https://nuxt.com/docs/4.x/directory-structure/env#production)); locally you can rely on `REDIS_*` baked in at build if you set them during `nuxi build`:
 
 ```bash
 nuxi build
-node .output/server/workers/index.mjs
+NUXT_REDIS_URL=redis://127.0.0.1:6379/0 node .output/server/workers/index.mjs
 ```
 
 To run only specific workers in production:
@@ -132,5 +131,3 @@ node .output/server/workers/index.mjs --workers=basic,hello
 ## Bull Board
 
 See the dedicated page: [Bull Board](/bull-board)
-
-

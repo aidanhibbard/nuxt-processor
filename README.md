@@ -31,6 +31,7 @@ Note: This package is under very active development! Please consider creating is
 ## Sections
 
 - [Install](#install)
+- [Redis configuration](#redis-configuration)
 - [Define a queue and enqueue from your app](#define-a-queue-and-enqueue-from-your-app)
 - [Define a worker](#define-a-worker)
 - [Running](#running)
@@ -44,35 +45,49 @@ Note: This package is under very active development! Please consider creating is
 npx nuxi@latest module add nuxt-processor@latest
 ```
 
-Add the module in `nuxt.config.ts` and set your Redis connection.
+Add the module in `nuxt.config.ts`:
 
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
   modules: ['nuxt-processor'],
-  processor: {
-    redis: {
-      // Prefer a single URL if available (takes precedence over other fields)
-      // e.g. redis://user:pass@host:6379/0
-      url: process.env.REDIS_URL,
-      host: process.env.REDIS_HOST ?? '127.0.0.1',
-      port: Number(process.env.REDIS_PORT ?? 6379),
-      password: process.env.REDIS_PASSWORD ?? '',
-      username: process.env.REDIS_USERNAME,
-      db: Number(process.env.REDIS_DB ?? 0),
-      // Optional connection behavior
-      // Delay connecting until first Redis command (useful to avoid build-time connects)
-      lazyConnect: process.env.REDIS_LAZY_CONNECT
-        ? process.env.REDIS_LAZY_CONNECT === 'true'
-        : undefined,
-      // Milliseconds to wait before giving up when establishing the connection
-      connectTimeout: process.env.REDIS_CONNECT_TIMEOUT
-        ? Number(process.env.REDIS_CONNECT_TIMEOUT)
-        : undefined,
-    },
-  },
 })
 ```
+
+Configure Redis via [runtime config](https://nuxt.com/docs/4.x/guide/going-further/runtime-config): **`REDIS_*` in dev/build**, **`NUXT_REDIS_*` at runtime** ([details](#redis-configuration) · [docs](https://aidanhibbard.github.io/nuxt-processor/redis)). API: [docs/API](https://aidanhibbard.github.io/nuxt-processor/api).
+
+## Redis configuration
+
+Queues and workers use `useRuntimeConfig().redis`.
+
+| Config key | Dev / build | Runtime (production / Docker) |
+| --- | --- | --- |
+| `redis.url` | `REDIS_URL` | `NUXT_REDIS_URL` |
+| `redis.host` | `REDIS_HOST` | `NUXT_REDIS_HOST` |
+| `redis.port` | `REDIS_PORT` | `NUXT_REDIS_PORT` |
+| `redis.password` | `REDIS_PASSWORD` | `NUXT_REDIS_PASSWORD` |
+| `redis.db` | `REDIS_DB` | `NUXT_REDIS_DB` |
+
+**Why two names?** Nuxt only overrides `runtimeConfig` at runtime with the [`NUXT_` prefix](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables). After `nuxi build`, [`.env` is not loaded`](https://nuxt.com/docs/4.x/directory-structure/env#production) — in Docker you must set `NUXT_REDIS_*` on the running container (or bake `REDIS_*` in at build time).
+
+```ini
+# .env — loaded by Nuxt CLI during nuxi dev / nuxi build
+REDIS_URL=redis://127.0.0.1:6379/0
+```
+
+```yaml
+# Docker Compose — runtime env on app and workers (see Nuxt production env docs)
+environment:
+  NUXT_REDIS_URL: redis://redis:6379/0
+```
+
+```bash
+NUXT_REDIS_URL=redis://127.0.0.1:6379/0 node .output/server/workers/index.mjs
+```
+
+Use the same Redis settings on the Nuxt app and workers process. If nothing is set, ioredis defaults to `127.0.0.1:6379`.
+
+Module option: `processor.workers` (default `server/workers`) — folder scanned for worker files.
 
 ## Define a queue and enqueue from your app
 
