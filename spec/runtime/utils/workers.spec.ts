@@ -228,6 +228,48 @@ describe('useProcessor registry', () => {
     await api.stopAll()
   })
 
+  it('coerces port and db from string runtimeConfig (e.g. NUXT_REDIS_PORT)', async () => {
+    useRuntimeConfig.mockReturnValue({
+      redis: {
+        host: 'redis.internal',
+        port: '6381',
+        db: '2',
+      },
+    })
+
+    const api = useProcessor()
+    const queue = api.createQueue('string-port')
+
+    expect(queue.opts.connection).toEqual({
+      host: 'redis.internal',
+      port: 6381,
+      db: 2,
+    })
+
+    await api.stopAll()
+  })
+
+  it('omits lazyConnect when NUXT sets string "false"', async () => {
+    useRuntimeConfig.mockReturnValue({
+      redis: {
+        host: '127.0.0.1',
+        port: 6379,
+        lazyConnect: 'false',
+      },
+    })
+
+    const api = useProcessor()
+    const queue = api.createQueue('lazy-false-string')
+
+    expect(queue.opts.connection).toEqual({
+      host: '127.0.0.1',
+      port: 6379,
+      lazyConnect: false,
+    })
+
+    await api.stopAll()
+  })
+
   it('strips empty redis fields so they do not appear on the connection', async () => {
     useRuntimeConfig.mockReturnValue({
       redis: {

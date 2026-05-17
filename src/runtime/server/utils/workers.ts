@@ -1,6 +1,7 @@
 import type { Job, JobsOptions, QueueOptions, WorkerOptions, Processor, ConnectionOptions } from 'bullmq'
 import { Queue, Worker } from 'bullmq'
 import { useRuntimeConfig } from 'nitropack/runtime'
+import { normalizeRedisConnectionEntry } from '../../../utils/normalize-redis-connection'
 
 function resolveConnection(type: 'queue' | 'worker'): ConnectionOptions {
   const { redis } = useRuntimeConfig()
@@ -8,10 +9,11 @@ function resolveConnection(type: 'queue' | 'worker'): ConnectionOptions {
 
   if (redis) {
     for (const [key, value] of Object.entries(redis)) {
-      if (value === '' || value === undefined || value === null) {
+      const normalized = normalizeRedisConnectionEntry(key, value)
+      if (normalized === undefined) {
         continue
       }
-      connection[key] = value
+      connection[key] = normalized
     }
   }
 

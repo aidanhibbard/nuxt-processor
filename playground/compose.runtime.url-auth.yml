@@ -1,15 +1,14 @@
-# Runtime-only Redis: use a pre-built image (see scripts/docker-smoke.sh).
-# NUXT_REDIS_* is set only on running containers — not at image build time.
+# Runtime-only Redis URL with password (no separate host/port env).
 services:
   redis-runtime:
     image: redis:7-alpine
-    command: ["redis-server", "--port", "6381"]
+    command: ["redis-server", "--port", "6381", "--requirepass", "smoke-secret"]
 
   app:
     image: ${NUXT_PROCESSOR_SMOKE_IMAGE:?Run scripts/docker-smoke.sh to build the image first}
     command: ["node", ".output/server/index.mjs"]
     environment:
-      NUXT_REDIS_URL: redis://redis-runtime:6381/0
+      NUXT_REDIS_URL: redis://:smoke-secret@redis-runtime:6381/0
     depends_on:
       - redis-runtime
 
@@ -17,6 +16,6 @@ services:
     image: ${NUXT_PROCESSOR_SMOKE_IMAGE:?Run scripts/docker-smoke.sh to build the image first}
     command: ["node", ".output/server/workers/index.mjs"]
     environment:
-      NUXT_REDIS_URL: redis://redis-runtime:6381/0
+      NUXT_REDIS_URL: redis://:smoke-secret@redis-runtime:6381/0
     depends_on:
       - redis-runtime

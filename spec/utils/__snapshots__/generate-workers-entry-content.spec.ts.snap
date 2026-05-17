@@ -61,10 +61,7 @@ logger.success('workers started')
 } catch (err) {
 logger.error('failed to initialize workers', err)
 }
-const closeRunningWorkers = async () => {
-  await Promise.allSettled(workersToRun.map(w => w.close()))
-}
-return { stop: closeRunningWorkers, workers: workersToRun }
+return { stop: () => api.stopAll(), workers: workersToRun }
 }
 
 const isMain = (() => {
@@ -164,10 +161,7 @@ logger.success('workers started')
 } catch (err) {
 logger.error('failed to initialize workers', err)
 }
-const closeRunningWorkers = async () => {
-  await Promise.allSettled(workersToRun.map(w => w.close()))
-}
-return { stop: closeRunningWorkers, workers: workersToRun }
+return { stop: () => api.stopAll(), workers: workersToRun }
 }
 
 const isMain = (() => {

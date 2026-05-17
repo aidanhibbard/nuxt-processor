@@ -51,13 +51,12 @@ describe('generate-workers-entry-content', () => {
     expect(content).toContain('(Array.isArray(api.workers) ? api.workers : [])')
   })
 
-  it('generates entry that returns stop closing only workersToRun', () => {
+  it('generates entry that stops via useProcessor().stopAll()', () => {
     const content = generateWorkersEntryContent(
       ['/path/to/worker.mjs'],
     )
-    expect(content).toContain('workersToRun.map(w => w.close())')
-    expect(content).toContain('closeRunningWorkers')
-    expect(content).toContain('return { stop: closeRunningWorkers, workers: workersToRun }')
+    expect(content).toContain('return { stop: () => api.stopAll(), workers: workersToRun }')
+    expect(content).not.toContain('closeRunningWorkers')
   })
 
   it('generates entry that warns and exits when no workers match --workers filter', () => {
