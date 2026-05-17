@@ -18,4 +18,5 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
       - run: npm ci
+      - run: npm ci --prefix playground
       - run: npm run ci
