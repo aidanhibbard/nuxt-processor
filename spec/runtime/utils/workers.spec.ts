@@ -39,8 +39,9 @@ vi.mock('bullmq', () => {
 })
 
 describe('useProcessor registry', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     useRuntimeConfig.mockReturnValue({ redis: { host: '127.0.0.1', port: 6379 } })
+    await useProcessor().stopAll()
   })
 
   it('creates queues and workers from runtimeConfig with autorun=false', async () => {
@@ -277,6 +278,29 @@ describe('useProcessor registry', () => {
       db: 1,
       maxRetriesPerRequest: null,
     }))
+  })
+
+  it('stopAll clears the shared registry for a fresh init in the same process', async () => {
+    const api = useProcessor()
+    const queue = api.createQueue('shutdown-q')
+    const worker = api.createWorker('shutdown-q', async () => {})
+
+    expect(api.queues).toEqual([queue])
+    expect(api.workers).toEqual([worker])
+
+    await api.stopAll()
+
+    expect(api.queues).toEqual([])
+    expect(api.workers).toEqual([])
+
+    const api2 = useProcessor()
+    const queue2 = api2.createQueue('shutdown-q-2')
+
+    expect(api2.queues).toEqual([queue2])
+    expect(api2.workers).toEqual([])
+    expect(api2.queues).not.toContain(queue)
+
+    await api2.stopAll()
   })
 
   it('registry can store heterogeneous generic instances safely', async () => {

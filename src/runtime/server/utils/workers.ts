@@ -54,6 +54,10 @@ function getRegistry(): WorkersRegistry {
   return state.registry
 }
 
+function clearRegistry(): void {
+  getProcessorState().registry = undefined
+}
+
 export function useProcessor() {
   function createQueue<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,6 +101,7 @@ export function useProcessor() {
     const state = getRegistry()
     await Promise.allSettled(state.workers.map(w => w.close()))
     await Promise.allSettled(state.queues.map(q => q.close()))
+    clearRegistry()
   }
 
   return {
