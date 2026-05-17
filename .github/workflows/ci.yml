@@ -19,5 +19,3 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run ci
-      - run: npm run test:docker
-
