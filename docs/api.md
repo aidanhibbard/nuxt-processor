@@ -44,7 +44,7 @@ interface ModuleOptions {
 
 ## Runtime config
 
-Redis connection settings live on `useRuntimeConfig().redis`. See [Redis configuration](/redis) for `REDIS_*` (dev/build) vs `NUXT_REDIS_*` (runtime). Nuxt requires the [`NUXT_` prefix at runtime](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables); [`.env` is not loaded in production](https://nuxt.com/docs/4.x/directory-structure/env#production) — use `NUXT_REDIS_*` in Docker `environment:` on both app and workers services.
+Redis connection settings live on `useRuntimeConfig().redis`. See [Redis configuration](/redis) for `REDIS_*` (dev/build) vs `NUXT_REDIS_*` (runtime). Nuxt requires the [`NUXT_` prefix at runtime](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables); [the .env file is not loaded in production](https://nuxt.com/docs/4.x/directory-structure/env#production) — use `NUXT_REDIS_*` in Docker `environment:` on both app and workers services.
 
 ```ts
 interface RuntimeConfig {

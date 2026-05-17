@@ -76,7 +76,7 @@ Using Valkey? Read [this thread](https://github.com/taskforcesh/bullmq/issues/30
 
 Configure Redis via [runtime config](https://nuxt.com/docs/4.x/guide/going-further/runtime-config): **`REDIS_*` in dev/build**, **`NUXT_REDIS_*` at runtime** ([details](#redis-configuration) · [docs](https://aidanhibbard.github.io/nuxt-processor/redis)). API: [docs/API](https://aidanhibbard.github.io/nuxt-processor/api).
 
-**Dev / build** — in [`.env`](https://nuxt.com/docs/4.x/directory-structure/env) (loaded by the Nuxt CLI during `nuxi dev` and `nuxi build`):
+**Dev / build** — in the [.env file](https://nuxt.com/docs/4.x/directory-structure/env) (loaded by the Nuxt CLI during `nuxi dev` and `nuxi build`):
 
 ```ini
 REDIS_URL=redis://127.0.0.1:6379/0

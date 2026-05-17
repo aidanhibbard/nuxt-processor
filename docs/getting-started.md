@@ -28,7 +28,7 @@ export default defineNuxtConfig({
 Configure Redis with [runtime config](https://nuxt.com/docs/4.x/guide/going-further/runtime-config).
 
 - **Dev / build:** `REDIS_*` in `.env` (loaded by `nuxi dev` / `nuxi build`) — see [Redis configuration](/redis).
-- **Production / Docker:** `NUXT_REDIS_*` at runtime — Nuxt only applies env overrides with the [`NUXT_` prefix](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables). After build, [`.env` is not read](https://nuxt.com/docs/4.x/directory-structure/env#production); set vars on the container (Compose `environment:`, K8s, etc.).
+- **Production / Docker:** `NUXT_REDIS_*` at runtime — Nuxt only applies env overrides with the [`NUXT_` prefix](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables). After build, [the .env file is not read in production](https://nuxt.com/docs/4.x/directory-structure/env#production); set vars on the container (Compose `environment:`, K8s, etc.).
 
 ```ini
 # .env (nuxi dev / nuxi build)

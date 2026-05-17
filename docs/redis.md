@@ -6,7 +6,7 @@ title: Redis configuration
 
 Queues and workers connect via `useRuntimeConfig().redis` in `resolveConnection()`. Use **`REDIS_*` during dev/build** and **`NUXT_REDIS_*` at runtime** (when running the built server).
 
-Nuxt only applies env overrides at runtime for variables that match declared `runtimeConfig` keys and use the [`NUXT_` prefix](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables). After `nuxi build`, your project [`.env` file is not read`](https://nuxt.com/docs/4.x/directory-structure/env#production) — you must set variables in the host environment (Docker `environment:`, Kubernetes secrets, etc.).
+Nuxt only applies env overrides at runtime for variables that match declared `runtimeConfig` keys and use the [`NUXT_` prefix](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables). After `nuxi build`, your project [.env file is not read in production](https://nuxt.com/docs/4.x/directory-structure/env#production) — you must set variables in the host environment (Docker `environment:`, Kubernetes secrets, etc.).
 
 Using Valkey? Read [this thread](https://github.com/taskforcesh/bullmq/issues/3083).
 
@@ -41,7 +41,7 @@ Values are merged into `runtimeConfig.redis` and baked into the Nitro output. Th
 
 Use for **production and Docker**: env vars you inject when the container (or process) starts, not when the image is built.
 
-Nuxt documents this under [runtime config environment variables](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables) — only `NUXT_`-prefixed names override `runtimeConfig` at runtime. See also [`.env` in production](https://nuxt.com/docs/4.x/directory-structure/env#production): the `.env` file is **not** loaded after `nuxi build`, so `REDIS_URL` in a container env block will **not** apply unless it was baked in at build time or you use `NUXT_REDIS_URL`.
+Nuxt documents this under [runtime config environment variables](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables) — only `NUXT_`-prefixed names override `runtimeConfig` at runtime. See also [.env in production](https://nuxt.com/docs/4.x/directory-structure/env#production): the `.env` file is **not** loaded after `nuxi build`, so `REDIS_URL` in a container env block will **not** apply unless it was baked in at build time or you use `NUXT_REDIS_URL`.
 
 ```bash
 NUXT_REDIS_URL=redis://redis:6379/0 node .output/server/index.mjs
