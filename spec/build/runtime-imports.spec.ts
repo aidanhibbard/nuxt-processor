@@ -8,7 +8,6 @@ describe('runtime bundle imports', () => {
     const source = readFileSync(workersPath, 'utf8')
 
     expect(source).not.toMatch(/from ['"]\.\.\/\.\.\/\.\.\/utils\//)
-    expect(source).toContain("from './normalize-redis-connection'")
+    expect(source).toContain('from \'./normalize-redis-connection\'')
   })
-
 })
