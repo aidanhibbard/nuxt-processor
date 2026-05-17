@@ -1,5 +1,5 @@
 import type { Worker, WorkerOptions, Processor } from 'bullmq'
-import { $workers } from '../utils/workers'
+import { useProcessor } from '../utils/workers'
 
 type DefineWorkerArgs<
   NameType extends string = string,
@@ -21,7 +21,7 @@ export function defineWorker<
   ResultType = any,
 >(args: DefineWorkerArgs<NameType, DataType, ResultType>): Worker<DataType, ResultType, NameType> {
   const { name, options, processor } = args
-  const { createWorker } = $workers()
+  const { createWorker } = useProcessor()
   return createWorker<DataType, ResultType, NameType>(name, processor, options)
 }
 

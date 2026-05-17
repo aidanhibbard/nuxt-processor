@@ -11,8 +11,8 @@ hero:
       text: Get Started
       link: /getting-started
     - theme: alt
-      text: Define a Worker
-      link: /define-worker
+      text: API
+      link: /api
     - theme: alt
       text: Bull Board
       link: /bull-board

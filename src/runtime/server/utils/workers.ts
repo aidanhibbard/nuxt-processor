@@ -1,44 +1,66 @@
-import type { Job, JobsOptions, QueueOptions, WorkerOptions, Processor, RedisOptions } from 'bullmq'
+import type { Job, JobsOptions, QueueOptions, WorkerOptions, Processor, ConnectionOptions } from 'bullmq'
 import { Queue, Worker } from 'bullmq'
+import { useRuntimeConfig } from 'nitropack/runtime'
+import { normalizeRedisConnectionEntry } from '../../../utils/normalize-redis-connection'
+
+function resolveConnection(type: 'queue' | 'worker'): ConnectionOptions {
+  const { redis } = useRuntimeConfig()
+  const connection: Record<string, unknown> = {}
+
+  if (redis) {
+    for (const [key, value] of Object.entries(redis)) {
+      const normalized = normalizeRedisConnectionEntry(key, value)
+      if (normalized === undefined) {
+        continue
+      }
+      connection[key] = normalized
+    }
+  }
+
+  if (type === 'worker') {
+    connection.maxRetriesPerRequest = null
+  }
+
+  return connection as ConnectionOptions
+}
 
 interface WorkersRegistry {
-  connection?: QueueOptions['connection']
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   queues: Array<Queue<any, any, any>>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   workers: Array<Worker<any, any, any>>
 }
 
-const registry: WorkersRegistry = {
-  connection: undefined,
-  queues: [],
-  workers: [],
+interface ProcessorState {
+  registry?: WorkersRegistry
 }
 
-export function $workers() {
-  type ConnectionInput = QueueOptions['connection'] | RedisOptions | string
+/** Nitro may bundle top-level defineQueue() before module-level bindings here; use only globals inside this function. */
+function getProcessorState(): ProcessorState {
+  const key = Symbol.for('nuxt-processor.state')
+  const g = globalThis as typeof globalThis & { [key: symbol]: ProcessorState | undefined }
+  if (!g[key]) {
+    g[key] = {}
+  }
+  return g[key]
+}
 
-  function setConnection(connection: ConnectionInput) {
-    if (connection && typeof connection === 'object' && 'url' in connection && connection.url) {
-      registry.connection = connection
-    }
-    else if (typeof connection === 'string') {
-      registry.connection = { url: connection }
-    }
-    else {
-      registry.connection = connection as QueueOptions['connection']
+function getRegistry(): WorkersRegistry {
+  const state = getProcessorState()
+  if (!state.registry) {
+    state.registry = {
+      queues: [],
+      workers: [],
     }
   }
+  return state.registry
+}
 
-  function getWorkerConnection() {
-    if (!registry.connection) return registry.connection
+function clearRegistry(): void {
+  getProcessorState().registry = undefined
+}
 
-    return {
-      ...(registry.connection as RedisOptions),
-      maxRetriesPerRequest: null,
-    } as QueueOptions['connection']
-  }
-
+export function useProcessor() {
   function createQueue<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     DataTypeOrJob = any,
@@ -50,10 +72,10 @@ export function $workers() {
     options?: Omit<QueueOptions, 'connection'> & { defaultJobOptions?: JobsOptions },
   ): Queue<DataTypeOrJob, DefaultResultType, DefaultNameType> {
     const queue = new Queue<DataTypeOrJob, DefaultResultType, DefaultNameType>(name, {
-      connection: registry.connection as QueueOptions['connection'],
+      connection: resolveConnection('queue'),
       ...options,
     })
-    registry.queues.push(queue)
+    getRegistry().queues.push(queue)
     return queue
   }
 
@@ -69,27 +91,27 @@ export function $workers() {
     options?: Omit<WorkerOptions, 'connection'>,
   ): Worker<DataType, ResultType, NameType> {
     const worker = new Worker<DataType, ResultType, NameType>(name, processor, {
-      connection: getWorkerConnection() as WorkerOptions['connection'],
+      connection: resolveConnection('worker'),
       ...options,
       autorun: false,
     })
-    registry.workers.push(worker)
+    getRegistry().workers.push(worker)
     return worker
   }
 
   async function stopAll() {
-    await Promise.allSettled(registry.workers.map(w => w.close()))
-    await Promise.allSettled(registry.queues.map(q => q.close()))
+    const state = getRegistry()
+    await Promise.allSettled(state.workers.map(w => w.close()))
+    await Promise.allSettled(state.queues.map(q => q.close()))
+    clearRegistry()
   }
 
   return {
-    setConnection,
     createQueue,
     createWorker,
     stopAll,
-    get queues() { return registry.queues },
-    get workers() { return registry.workers },
-    get connection() { return registry.connection },
+    get queues() { return getRegistry().queues },
+    get workers() { return getRegistry().workers },
   }
 }
 

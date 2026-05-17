@@ -1,5 +1,4 @@
-# Runtime-only Redis: use a pre-built image (see scripts/docker-smoke.sh).
-# NUXT_REDIS_* is set only on running containers — not at image build time.
+# Runtime-only host/port + lazyConnect + connectTimeout.
 services:
   redis-runtime:
     image: redis:7-alpine
@@ -9,7 +8,11 @@ services:
     image: ${NUXT_PROCESSOR_SMOKE_IMAGE:?Run scripts/docker-smoke.sh to build the image first}
     command: ["node", ".output/server/index.mjs"]
     environment:
-      NUXT_REDIS_URL: redis://redis-runtime:6381/0
+      NUXT_REDIS_HOST: redis-runtime
+      NUXT_REDIS_PORT: "6381"
+      NUXT_REDIS_DB: "0"
+      NUXT_REDIS_LAZY_CONNECT: "true"
+      NUXT_REDIS_CONNECT_TIMEOUT: "15000"
     depends_on:
       - redis-runtime
 
@@ -17,6 +20,10 @@ services:
     image: ${NUXT_PROCESSOR_SMOKE_IMAGE:?Run scripts/docker-smoke.sh to build the image first}
     command: ["node", ".output/server/workers/index.mjs"]
     environment:
-      NUXT_REDIS_URL: redis://redis-runtime:6381/0
+      NUXT_REDIS_HOST: redis-runtime
+      NUXT_REDIS_PORT: "6381"
+      NUXT_REDIS_DB: "0"
+      NUXT_REDIS_LAZY_CONNECT: "true"
+      NUXT_REDIS_CONNECT_TIMEOUT: "15000"
     depends_on:
       - redis-runtime

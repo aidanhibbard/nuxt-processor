@@ -16,14 +16,14 @@ describe('generate-workers-entry-content', () => {
     expect(content).toMatchSnapshot()
   })
 
-  it('generates entry that reads Redis from runtime config and REDIS_URL', () => {
+  it('creates workers inside createWorkersApp (connection from runtimeConfig at use time)', () => {
     const content = generateWorkersEntryContent(
       ['/path/to/worker.mjs'],
     )
 
-    expect(content).toContain('import { useRuntimeConfig } from \'#imports\'')
-    expect(content).toContain('const { redis } = useRuntimeConfig()')
-    expect(content).toContain('api.setConnection(process.env.REDIS_URL ? { ...redis, url: process.env.REDIS_URL } : redis)')
+    expect(content).not.toContain('setConnection')
+    expect(content).toContain('export async function createWorkersApp()')
+    expect(content).toContain('const api = useProcessor()')
   })
 
   it('generates entry that parses --workers flag from process.argv', () => {
@@ -51,13 +51,12 @@ describe('generate-workers-entry-content', () => {
     expect(content).toContain('(Array.isArray(api.workers) ? api.workers : [])')
   })
 
-  it('generates entry that returns stop closing only workersToRun', () => {
+  it('generates entry that stops via useProcessor().stopAll()', () => {
     const content = generateWorkersEntryContent(
       ['/path/to/worker.mjs'],
     )
-    expect(content).toContain('workersToRun.map(w => w.close())')
-    expect(content).toContain('closeRunningWorkers')
-    expect(content).toContain('return { stop: closeRunningWorkers, workers: workersToRun }')
+    expect(content).toContain('return { stop: () => api.stopAll(), workers: workersToRun }')
+    expect(content).not.toContain('closeRunningWorkers')
   })
 
   it('generates entry that warns and exits when no workers match --workers filter', () => {

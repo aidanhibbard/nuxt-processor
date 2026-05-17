@@ -1,7 +1,13 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 import { defineQueue } from '../../../src/runtime/server/handlers/defineQueue'
-import { $workers, type QueueOptions } from '../../../src/runtime/server/utils/workers'
+import { useProcessor, type QueueOptions } from '../../../src/runtime/server/utils/workers'
+
+const useRuntimeConfig = vi.fn()
+
+vi.mock('nitropack/runtime', () => ({
+  useRuntimeConfig: () => useRuntimeConfig(),
+}))
 
 vi.mock('bullmq', () => {
   class MockQueue {
@@ -19,22 +25,50 @@ vi.mock('bullmq', () => {
 })
 
 describe('defineQueue', () => {
-  it('creates a queue using $workers and returns it', async () => {
-    const api = $workers()
-    const connection = { host: 'localhost', port: 6379 }
-    api.setConnection(connection)
+  beforeEach(() => {
+    useRuntimeConfig.mockReturnValue({ redis: { host: 'localhost', port: 6379 } })
+  })
+
+  it('creates a queue using runtimeConfig redis', async () => {
+    const api = useProcessor()
 
     const queue = defineQueue({ name: 'email', options: { defaultJobOptions: { attempts: 1 } } })
 
     expect(queue.name).toBe('email')
-    expect((queue).opts.connection).toEqual(expect.objectContaining(connection))
+    expect(queue.opts.connection).toEqual(expect.objectContaining({
+      host: 'localhost',
+      port: 6379,
+    }))
+    expect(queue.opts.connection).not.toHaveProperty('lazyConnect')
+
+    await api.stopAll()
+  })
+
+  it('passes lazyConnect and connectTimeout from runtimeConfig', async () => {
+    useRuntimeConfig.mockReturnValue({
+      redis: {
+        host: 'localhost',
+        port: 6379,
+        lazyConnect: true,
+        connectTimeout: 10_000,
+      },
+    })
+
+    const api = useProcessor()
+    const queue = defineQueue({ name: 'email' })
+
+    expect(queue.opts.connection).toEqual(expect.objectContaining({
+      host: 'localhost',
+      port: 6379,
+      lazyConnect: true,
+      connectTimeout: 10_000,
+    }))
 
     await api.stopAll()
   })
 
   it('supports typed name, data and result through generics', async () => {
-    const api = $workers()
-    api.setConnection({ host: 'localhost', port: 6379 })
+    const api = useProcessor()
 
     type Name = 'hello'
     type Data = { z: number }
@@ -42,16 +76,13 @@ describe('defineQueue', () => {
 
     const queue = defineQueue<Data, Result, Name>({ name: 'hello' })
 
-    // .add signature should be strongly typed
     await queue.add('hello', { z: 1 })
-    // Type-level checks focus on .add payload/name
 
     await api.stopAll()
   })
 
   it('works without generics (any types)', async () => {
-    const api = $workers()
-    api.setConnection({ host: 'localhost', port: 6379 })
+    const api = useProcessor()
 
     const queue = defineQueue({ name: 'plain' })
     await queue.add('plain', { n: 1 })

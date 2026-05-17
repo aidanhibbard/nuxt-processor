@@ -10,8 +10,9 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Getting Started', link: '/getting-started' },
-      { text: 'Define Worker', link: '/define-worker' },
-      { text: 'Define Queue', link: '/define-queue' },
+      { text: 'API', link: '/api' },
+      { text: 'Redis', link: '/redis' },
+      { text: 'Upgrading', link: '/upgrading' },
     ],
 
     sidebar: [
@@ -19,8 +20,17 @@ export default defineConfig({
         text: 'Guide',
         items: [
           { text: 'Getting Started', link: '/getting-started' },
-          { text: 'Define Worker', link: '/define-worker' },
+          { text: 'Upgrading from 0.x', link: '/upgrading' },
+          { text: 'Redis configuration', link: '/redis' },
           { text: 'Define Queue', link: '/define-queue' },
+          { text: 'Define Worker', link: '/define-worker' },
+          { text: 'Bull Board', link: '/bull-board' },
+        ],
+      },
+      {
+        text: 'Reference',
+        items: [
+          { text: 'API', link: '/api' },
         ],
       },
     ],

@@ -1,16 +1,12 @@
-import { defineNuxtModule, createResolver, addTypeTemplate, addServerPlugin, addTemplate } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addTypeTemplate } from '@nuxt/kit'
 import { name, version, configKey, compatibility } from '../package.json'
-import type { RedisOptions as BullRedisOptions } from 'bullmq'
+import { buildRedisRuntimeConfig } from './utils/redis-runtime-config'
 import type { Plugin } from 'rollup'
 import { relative } from 'node:path'
 import scanFolder from './utils/scan-folder'
 import { generateWorkersEntryContent } from './utils/generate-workers-entry-content'
 
-// Module options TypeScript interface definition
-type ModuleRedisOptions = BullRedisOptions & { url?: string }
-
 export interface ModuleOptions {
-  redis: ModuleRedisOptions
   /**
    * The folder containing the worker files
    * Scans for {ts,js,mjs}
@@ -26,61 +22,31 @@ export default defineNuxtModule<ModuleOptions>({
     compatibility,
     configKey,
   },
-  // Default configuration options of the Nuxt module
   defaults: {
-    redis: {
-      host: process.env.REDIS_HOST ?? '127.0.0.1',
-      port: Number(process.env.REDIS_PORT ?? 6379),
-      password: process.env.REDIS_PASSWORD ?? '',
-      username: process.env.REDIS_USERNAME ?? undefined, // needs Redis >= 6
-      db: Number(process.env.REDIS_DB ?? 0), // Defaults to 0 on ioredis
-      lazyConnect: process.env.REDIS_LAZY_CONNECT === 'true' ? true : undefined,
-      connectTimeout: process.env.REDIS_CONNECT_TIMEOUT ? Number(process.env.REDIS_CONNECT_TIMEOUT) : undefined,
-      url: process.env.REDIS_URL ?? undefined,
-    } as ModuleRedisOptions,
     workers: 'server/workers',
   },
   async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
-    const runtimeConfig = nuxt.options.runtimeConfig as typeof nuxt.options.runtimeConfig & { redis?: ModuleRedisOptions }
-    runtimeConfig.redis = {
-      ...(_options.redis ?? {}),
-      ...(runtimeConfig.redis ?? {}),
-    }
+    // Register keys for NUXT_REDIS_* at runtime; seed defaults from REDIS_* during dev/build.
+    // Empty values are stripped in resolveConnection() so ioredis can use its own defaults.
+    nuxt.options.runtimeConfig.redis = buildRedisRuntimeConfig(
+      nuxt.options.runtimeConfig.redis as Record<string, unknown> | undefined,
+    )
 
-    const nitroPlugin = `
-    import { defineNitroPlugin, useRuntimeConfig } from '#imports'
-    import { $workers } from '#processor-utils'
-
-    export default defineNitroPlugin(() => {
-      const { redis } = useRuntimeConfig()
-      $workers().setConnection(process.env.REDIS_URL ? { ...redis, url: process.env.REDIS_URL } : redis)
-    })
-    `
-
-    const tpl = addTemplate({
-      filename: '0.processor-nuxt-plugin.ts',
-      write: true,
-      getContents: () => nitroPlugin,
-    })
-
-    addServerPlugin(tpl.dst)
-
-    // Alias inside the app to the identity API so user imports resolve at build-time
     nuxt.options.alias = nuxt.options.alias ?? {}
     nuxt.options.alias['nuxt-processor'] = resolve('./runtime/server/handlers')
     nuxt.options.alias['#processor'] = resolve('./runtime/server/handlers')
-    nuxt.options.alias['#processor-utils'] = resolve('./runtime/server/utils/workers')
-    // Allow swapping BullMQ implementation allowing for bullmq pro (default to 'bullmq')
+    nuxt.options.alias['#processor-utils'] = resolve('./runtime/server/utils')
     if (!nuxt.options.alias['#bullmq']) {
       nuxt.options.alias['#bullmq'] = 'bullmq'
     }
 
-    // Provide TypeScript declarations for the alias so IDE/type-check recognizes named exports
     addTypeTemplate({
       filename: 'types/nuxt-processor.d.ts',
       getContents: () => `
+import type { RedisOptions } from 'bullmq'
+
 declare module 'nuxt-processor' {
   export { defineQueue } from '${resolve('./runtime/server/handlers/defineQueue')}'
   export { defineWorker } from '${resolve('./runtime/server/handlers/defineWorker')}'
@@ -91,17 +57,18 @@ declare module '#processor' {
   export { defineWorker } from '${resolve('./runtime/server/handlers/defineWorker')}'
 }
 
-declare module '#processor-utils' {
-  export { $workers } from '${resolve('./runtime/server/utils/workers')}'
-}
-
 declare module '#bullmq' {
   export * from 'bullmq'
+}
+
+declare module '@nuxt/schema' {
+  interface RuntimeConfig {
+    redis: RedisOptions & { url?: string }
+  }
 }
 `,
     })
 
-    // Create a Rollup plugin that emits a virtual workers chunk into Nitro's output
     function createWorkersRollupPlugin(): Plugin {
       const VIRTUAL_ID = '\u0000nuxt-processor-entry'
       let virtualCode = ''
@@ -118,7 +85,6 @@ declare module '#bullmq' {
           for (const id of workerFiles) {
             this.addWatchFile(id)
           }
-          // Emit the virtual workers entry as its own chunk early in the build
           entryRefId = this.emitFile({ type: 'chunk', id: VIRTUAL_ID, fileName: 'workers/_entry.mjs' })
         },
         resolveId(id: string) {
@@ -145,7 +111,6 @@ declare module '#bullmq' {
       }
     }
 
-    // Inject our Rollup plugin into Nitro so it emits the workers chunk without a separate build
     nuxt.hooks.hook('nitro:config', (nitroConfig) => {
       nitroConfig.rollupConfig = nitroConfig.rollupConfig ?? {}
       const plugin = createWorkersRollupPlugin()
@@ -160,7 +125,5 @@ declare module '#bullmq' {
         nitroConfig.rollupConfig.plugins = [plugin]
       }
     })
-
-    // The workers chunk will be emitted to Nitro's output as workers/index.mjs
   },
 })
