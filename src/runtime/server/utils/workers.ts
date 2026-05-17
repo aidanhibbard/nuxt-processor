@@ -1,7 +1,7 @@
 import type { Job, JobsOptions, QueueOptions, WorkerOptions, Processor, ConnectionOptions } from 'bullmq'
 import { Queue, Worker } from 'bullmq'
 import { useRuntimeConfig } from 'nitropack/runtime'
-import { normalizeRedisConnectionEntry } from '../../../utils/normalize-redis-connection'
+import { normalizeRedisConnectionEntry } from './normalize-redis-connection'
 
 function resolveConnection(type: 'queue' | 'worker'): ConnectionOptions {
   const { redis } = useRuntimeConfig()

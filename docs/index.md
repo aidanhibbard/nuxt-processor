@@ -14,6 +14,9 @@ hero:
       text: API
       link: /api
     - theme: alt
+      text: Upgrading
+      link: /upgrading
+    - theme: alt
       text: Bull Board
       link: /bull-board
 

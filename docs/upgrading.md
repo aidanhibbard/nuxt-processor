@@ -4,7 +4,16 @@ title: Upgrading
 
 # Upgrading
 
-This guide covers **v1.x** changes to Redis configuration and the workers registry. Treat this as a **major / breaking** upgrade if you are on **0.x** with `processor.redis`, `$workers()`, or `setConnection()`.
+This guide covers **v2.0** breaking changes to Redis configuration and the workers registry.
+
+**Read this if you are on 0.x or 1.x** and use any of: `processor.redis` in `nuxt.config`, `$workers()`, or `setConnection()`.
+
+| Your version | What changed in v2 |
+| --- | --- |
+| **0.x** | `processor.redis`, `$workers()`, `setConnection()`, and runtime `REDIS_URL`-only overrides |
+| **1.x** | `processor.redis` module option (removed — use `runtimeConfig.redis` and env vars); `$workers()` → `useProcessor()`; `setConnection()` removed |
+
+If you are already on **2.0.0-beta** with `runtimeConfig.redis` / `REDIS_*` / `NUXT_REDIS_*` and `useProcessor()`, you are aligned with stable v2.
 
 ## Why this changed
 

@@ -20,7 +20,7 @@ export default defineConfig({
         text: 'Guide',
         items: [
           { text: 'Getting Started', link: '/getting-started' },
-          { text: 'Upgrading from 0.x', link: '/upgrading' },
+          { text: 'Upgrading from 0.x / 1.x', link: '/upgrading' },
           { text: 'Redis configuration', link: '/redis' },
           { text: 'Define Queue', link: '/define-queue' },
           { text: 'Define Worker', link: '/define-worker' },

@@ -52,8 +52,7 @@ export const main = createMain({
         }
 
         if (!scriptEnsured) {
-          logger.error('Could not ensure processor:dev script in package.json.')
-          process.exit(1)
+          logger.info('No "processor:dev" script in package.json — continuing with `npx nuxt-processor dev`.')
         }
 
         const nodeBin = process.execPath

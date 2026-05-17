@@ -26,7 +26,7 @@ and `SECURITY.md` for security reports.
 
 ## Development setup
 
-Requirements: **Node.js 20+** (CI uses 24.x), **npm**, and **Redis** for manual playground testing.
+Requirements: **Node.js 24.x** (see `.nvmrc`), **npm**, and **Redis** for manual playground testing.
 
 ```bash
 git clone https://github.com/aidanhibbard/nuxt-processor.git

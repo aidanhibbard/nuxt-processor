@@ -1,8 +1,8 @@
-## v2.0.0-beta.0
+## v2.0.0
 
-[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v1.1.0...v2.0.0-beta.0)
+[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v1.1.0...v2.0.0)
 
-> **Beta:** install with `npm install nuxt-processor@beta`. Breaking vs 1.x — see [upgrading guide](https://aidanhibbard.github.io/nuxt-processor/upgrading).
+> **Upgrading from 0.x or 1.x?** See the [upgrading guide](https://aidanhibbard.github.io/nuxt-processor/upgrading).
 
 ### ⚠️ Breaking Changes
 
@@ -35,6 +35,10 @@
 ### 💅 Refactors
 
 - Remove `.npmrc` pnpm-only keys from the published package root.
+
+## v2.0.0-beta.0
+
+Pre-release of v2.0.0. Install with `npm install nuxt-processor@beta`.
 
 ## v1.1.0
 

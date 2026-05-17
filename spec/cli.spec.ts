@@ -148,19 +148,14 @@ describe('CLI dev command', () => {
     expect(pkg2.scripts && pkg2.scripts['processor:dev']).toBe('nuxt-processor dev')
   })
 
-  it('exits when entry exists but processor:dev script could not be ensured', async () => {
+  it('runs workers when entry exists even if processor:dev script was not added', async () => {
     const entryDir = join(tmpDir, '.nuxt', 'dev', 'workers')
     mkdirSync(entryDir, { recursive: true })
     writeFileSync(join(entryDir, 'index.mjs'), 'export {}\n')
     promptAnswer = 'n'
     const { main } = await importCli()
-    try {
-      await main({ rawArgs: ['dev', tmpDir] })
-    }
-    catch (e) {
-      expect(String(e)).toContain('process.exit(1)')
-    }
-    expect(_spawnCalled).toBe(false)
+    await main({ rawArgs: ['dev', tmpDir] })
+    expect(_spawnCalled).toBe(true)
   })
 
   it('kills child process on SIGINT signal', async () => {

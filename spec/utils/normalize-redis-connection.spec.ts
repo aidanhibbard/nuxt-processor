@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import { normalizeRedisConnectionEntry } from '../../src/utils/normalize-redis-connection'
+import { normalizeRedisConnectionEntry } from '../../src/runtime/server/utils/normalize-redis-connection'
 
 describe('normalizeRedisConnectionEntry', () => {
   it('omits empty values', () => {

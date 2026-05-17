@@ -1,8 +1,6 @@
 export function generateWorkersEntryContent(workerFiles: string[]): string {
   const toImportArray = workerFiles.map(id => `() => import(${JSON.stringify(id)})`).join(',\n    ')
   return `
-import { fileURLToPath } from 'node:url'
-import { resolve as resolvePath } from 'node:path'
 import { consola } from 'consola'
 import { useProcessor } from '#processor-utils'
 
@@ -60,39 +58,6 @@ logger.success('workers started')
 logger.error('failed to initialize workers', err)
 }
 return { stop: () => api.stopAll(), workers: workersToRun }
-}
-
-const isMain = (() => {
-try {
-if (typeof process === 'undefined' || !process.argv || !process.argv[1]) return false
-const argvPath = resolvePath(process.cwd?.() || '.', process.argv[1])
-const filePath = fileURLToPath(import.meta.url)
-return filePath === argvPath
-} catch {
-return false
-}
-})()
-if (isMain) {
-const logger = consola.create({}).withTag('nuxt-processor')
-const appPromise = createWorkersApp().catch((err) => {
-logger.error('failed to start workers', err)
-process.exit(1)
-})
-const shutdown = async () => {
-try { logger.info('closing workers...') } catch (err) { console.warn('nuxt-processor: failed to log shutdown start', err) }
-try {
-  const app = await appPromise
-  try {
-    const names = (app?.workers || []).map(w => w && w.name).filter(Boolean)
-    logger.info('closing workers:\\n' + names.map(n => ' - ' + n).join('\\n'))
-  } catch (eL) { console.warn('nuxt-processor: failed to log workers list on shutdown', eL) }
-  await app.stop()
-  try { logger.success('workers closed') } catch (err2) { console.warn('nuxt-processor: failed to log shutdown complete', err2) }
-}
-finally { process.exit(0) }
-}
-;['SIGINT','SIGTERM','SIGQUIT'].forEach(sig => process.on(sig, shutdown))
-process.on('beforeExit', shutdown)
 }
 
 export default { createWorkersApp }

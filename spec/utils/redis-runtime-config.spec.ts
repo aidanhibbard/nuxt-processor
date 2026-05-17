@@ -76,12 +76,15 @@ describe('buildRedisRuntimeConfig', () => {
     })
   })
 
-  it('lazyConnect is only true when REDIS_LAZY_CONNECT=true', () => {
+  it('maps REDIS_LAZY_CONNECT true/false and omits when unset', () => {
     vi.stubEnv('REDIS_LAZY_CONNECT', 'false')
-    expect(buildRedisRuntimeConfig(undefined).lazyConnect).toBe('')
+    expect(buildRedisRuntimeConfig(undefined).lazyConnect).toBe(false)
 
     vi.stubEnv('REDIS_LAZY_CONNECT', 'true')
     expect(buildRedisRuntimeConfig(undefined).lazyConnect).toBe(true)
+
+    vi.stubEnv('REDIS_LAZY_CONNECT', '')
+    expect(buildRedisRuntimeConfig(undefined).lazyConnect).toBe('')
   })
 
   it('user can override username and lazyConnect from runtimeConfig', () => {

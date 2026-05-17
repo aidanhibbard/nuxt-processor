@@ -11,11 +11,11 @@
 
 Note: This package is under very active development! Please consider creating issues if you run into anything!
 
-**Upgrading from 0.x?** Redis config and the workers registry changed in v1 — see the [upgrading guide](https://aidanhibbard.github.io/nuxt-processor/upgrading).
+**Upgrading from 0.x or 1.x?** Redis config and the workers registry changed in v2 — see the [upgrading guide](https://aidanhibbard.github.io/nuxt-processor/upgrading).
 
 **Using an LLM?** Documentation markdown is included in the package at `node_modules/nuxt-processor/docs/`
 
-- [✨ &nbsp;Release Notes](/CHANGELOG.md)
+- [✨ &nbsp;Release Notes](./changelog.md)
 - [📖 &nbsp;Documentation](https://aidanhibbard.github.io/nuxt-processor/)
 
 ## Features
@@ -35,7 +35,7 @@ Note: This package is under very active development! Please consider creating is
 ## Sections
 
 - [Install](#install)
-- [Upgrading from 0.x](https://aidanhibbard.github.io/nuxt-processor/upgrading)
+- [Upgrading from 0.x / 1.x](https://aidanhibbard.github.io/nuxt-processor/upgrading)
 - [Redis configuration](#redis-configuration)
 - [Define a queue and enqueue from your app](#define-a-queue-and-enqueue-from-your-app)
 - [Define a worker](#define-a-worker)

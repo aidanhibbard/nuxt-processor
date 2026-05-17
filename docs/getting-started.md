@@ -4,8 +4,8 @@ title: Getting Started
 
 # Getting Started
 
-::: info Upgrading from 0.x
-If you used `processor.redis`, `$workers()`, or `setConnection()`, read [Upgrading from 0.x](/upgrading) first.
+::: info Upgrading from 0.x or 1.x
+If you used `processor.redis`, `$workers()`, or `setConnection()`, read [Upgrading](/upgrading) first.
 :::
 
 ## Install

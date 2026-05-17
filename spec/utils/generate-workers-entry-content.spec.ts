@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { generateWorkersEntryContent } from '../../src/utils/generate-workers-entry-content'
 
 describe('generate-workers-entry-content', () => {
-  it('matches snapshot for single worker and undefined redis', () => {
+  it('matches snapshot for single worker', () => {
     const content = generateWorkersEntryContent(
       ['/path/to/worker.mjs'],
     )

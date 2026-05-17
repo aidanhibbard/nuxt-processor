@@ -1,6 +1,6 @@
 {
   "name": "nuxt-processor",
-  "version": "2.0.0-beta.0",
+  "version": "2.0.0",
   "description": "Nuxt Processor",
   "repository": "https://github.com/aidanhibbard/nuxt-processor",
   "license": "MIT",
@@ -41,7 +41,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "nuxi typecheck",
     "test": "vitest run",
-    "ci": "npm run lint && npm run typecheck && npm run test",
+    "ci": "npm run lint && npm run typecheck && npm run test:types && npm run test",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest watch",
     "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
