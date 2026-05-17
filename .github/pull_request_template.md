@@ -21,9 +21,10 @@ Closes #
 
 ## Checklist
 
+- [ ] I read [CONTRIBUTING.md](../CONTRIBUTING.md) and agree to the [Code of Conduct](../CODE_OF_CONDUCT.md)
 - [ ] I tested these changes locally
 - [ ] Added/updated tests if needed
 - [ ] Updated docs (README/docs) if needed
-- [ ] `npm run lint` and `npm test` pass
+- [ ] `npm run ci` passes (or `npm run lint` and `npm test` at minimum)
 - [ ] No breaking changes, or I documented them above
 

@@ -211,34 +211,17 @@ For more help getting set up, see this Bull Board H3 adapter comment: <https://g
 
 ## Contribution
 
-<details>
-  <summary>Local development</summary>
-  
-  ```bash
-  # Install dependencies
-  npm install
-  
-  # Generate type stubs
-  npm run dev:prepare
-  
-  # Develop with the playground
-  npm run dev
-  
-  # Build the playground
-  npm run dev:build
-  
-  # Run ESLint
-  npm run lint
-  
-  # Run Vitest
-  npm run test
-  npm run test:watch
-  
-  # Release new version
-  npm run release
-  ```
+See **[CONTRIBUTING.md](./CONTRIBUTING.md)** for setup, tests, and pull requests.
+Please follow our **[Code of Conduct](./CODE_OF_CONDUCT.md)**.
 
-</details>
+Quick start:
+
+```bash
+npm install
+npm run dev:prepare
+npm run dev
+npm run ci
+```
 
 
 <!-- Badges -->
