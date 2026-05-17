@@ -29,11 +29,10 @@ export function assertBakedRedisEmpty(sourcePath: string): void {
   }
 
   const match = source.match(/"redis":\s*\{([^}]+)\}/)
-  if (!match) {
+  const block = match?.[1]
+  if (!block) {
     throw new Error('Could not find redis block in nitro.mjs')
   }
-
-  const block = match[1]
   for (const key of REDIS_KEYS) {
     const re = new RegExp(`"${key}":\\s*""`)
     if (!re.test(block)) {
