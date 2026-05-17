@@ -1,7 +1,5 @@
 # Nuxt Processor
 
-**Using an LLM?** Documentation markdown is included in the package at `node_modules/nuxt-processor/docs/` (for example `redis.md`, `api.md`, `upgrading.md`).
-
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
 [![License][license-src]][license-href]
@@ -14,6 +12,8 @@
 Note: This package is under very active development! Please consider creating issues if you run into anything!
 
 **Upgrading from 0.x?** Redis config and the workers registry changed in v1 — see the [upgrading guide](https://aidanhibbard.github.io/nuxt-processor/upgrading).
+
+**Using an LLM?** Documentation markdown is included in the package at `node_modules/nuxt-processor/docs/`
 
 - [✨ &nbsp;Release Notes](/CHANGELOG.md)
 - [📖 &nbsp;Documentation](https://aidanhibbard.github.io/nuxt-processor/)
