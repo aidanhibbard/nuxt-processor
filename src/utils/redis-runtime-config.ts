@@ -1,10 +1,10 @@
 import { defu } from 'defu'
 
 export function buildRedisRuntimeConfig(
-  userRedis: Record<string, unknown> | undefined,
+  config: Record<string, unknown> | undefined,
   env: NodeJS.ProcessEnv = process.env,
 ) {
-  return defu(userRedis, {
+  return defu(config, {
     url: env.REDIS_URL ?? '',
     host: env.REDIS_HOST ?? '',
     port: env.REDIS_PORT ?? '',

@@ -4,7 +4,7 @@ import { useRuntimeConfig } from 'nitropack/runtime'
 
 function resolveConnection(type: 'queue' | 'worker'): ConnectionOptions {
   const { redis } = useRuntimeConfig() as { redis?: Record<string, unknown> }
-  const connection: Record<string, unknown> = { lazyConnect: true }
+  const connection: Record<string, unknown> = {}
 
   if (redis) {
     for (const [key, value] of Object.entries(redis)) {
