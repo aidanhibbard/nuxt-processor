@@ -108,7 +108,7 @@ These were supported on `processor.redis` in 0.x and map to the same [ioredis / 
 | Option | Env (build) | Env (runtime) | Notes |
 | --- | --- | --- | --- |
 | `username` | `REDIS_USERNAME` | `NUXT_REDIS_USERNAME` | Redis ACL user (Redis 6+) |
-| `lazyConnect` | `REDIS_LAZY_CONNECT=true` | `NUXT_REDIS_LAZY_CONNECT` | When unset, queues/workers still default to `lazyConnect: true` in `resolveConnection()` so Redis is not contacted during `nuxi build` |
+| `lazyConnect` | `REDIS_LAZY_CONNECT=true` | `NUXT_REDIS_LAZY_CONNECT` | Opt in when you want to defer connecting until the first Redis command (e.g. avoid build-time connects) |
 | `connectTimeout` | `REDIS_CONNECT_TIMEOUT` | `NUXT_REDIS_CONNECT_TIMEOUT` | Milliseconds |
 
 You can also set any of these in `runtimeConfig.redis` in `nuxt.config` (wins over `REDIS_*` at build).

@@ -97,8 +97,23 @@ describe('buildRedisRuntimeConfig', () => {
     })
   })
 
-  it('omits connectTimeout when REDIS_CONNECT_TIMEOUT is unset', () => {
+  it('seeds empty connectTimeout when REDIS_CONNECT_TIMEOUT is unset', () => {
     vi.stubEnv('REDIS_CONNECT_TIMEOUT', '')
     expect(buildRedisRuntimeConfig(undefined).connectTimeout).toBe('')
+  })
+
+  it('maps REDIS_CONNECT_TIMEOUT to a number when set', () => {
+    vi.stubEnv('REDIS_CONNECT_TIMEOUT', '20000')
+    expect(buildRedisRuntimeConfig(undefined).connectTimeout).toBe(20_000)
+  })
+
+  it('maps lazyConnect and connectTimeout from env for runtime config registration', () => {
+    vi.stubEnv('REDIS_LAZY_CONNECT', 'true')
+    vi.stubEnv('REDIS_CONNECT_TIMEOUT', '8000')
+
+    expect(buildRedisRuntimeConfig(undefined)).toMatchObject({
+      lazyConnect: true,
+      connectTimeout: 8000,
+    })
   })
 })

@@ -43,7 +43,7 @@ describe('useProcessor registry', () => {
     useRuntimeConfig.mockReturnValue({ redis: { host: '127.0.0.1', port: 6379 } })
   })
 
-  it('creates queues and workers from runtimeConfig with lazyConnect and autorun=false', async () => {
+  it('creates queues and workers from runtimeConfig with autorun=false', async () => {
     const api = useProcessor()
 
     const queue = api.createQueue('test-queue', { defaultJobOptions: { attempts: 2 } })
@@ -53,16 +53,16 @@ describe('useProcessor registry', () => {
     expect(queue.opts.connection).toEqual(expect.objectContaining({
       host: '127.0.0.1',
       port: 6379,
-      lazyConnect: true,
     }))
+    expect(queue.opts.connection).not.toHaveProperty('lazyConnect')
     expect((queue.opts.connection as unknown as { maxRetriesPerRequest?: unknown }).maxRetriesPerRequest).toBeUndefined()
     expect(worker.name).toBe('test-queue')
     expect(worker.opts.connection).toEqual(expect.objectContaining({
       host: '127.0.0.1',
       port: 6379,
-      lazyConnect: true,
       maxRetriesPerRequest: null,
     }))
+    expect(worker.opts.connection).not.toHaveProperty('lazyConnect')
     expect(worker.opts.autorun).toBe(false)
 
     expect(api.queues).toContain(queue)
@@ -90,48 +90,123 @@ describe('useProcessor registry', () => {
       host: '127.0.0.1',
       port: 6379,
       url: 'redis://user:pass@localhost:6379/0',
-      lazyConnect: true,
     })
     expect(worker.opts.connection).toEqual({
       host: '127.0.0.1',
       port: 6379,
       url: 'redis://user:pass@localhost:6379/0',
-      lazyConnect: true,
       maxRetriesPerRequest: null,
     })
   })
 
-  it('passes username, lazyConnect, and connectTimeout from runtimeConfig', async () => {
-    useRuntimeConfig.mockReturnValue({
-      redis: {
+  describe('lazyConnect and connectTimeout from runtimeConfig', () => {
+    it('passes lazyConnect true to queues and workers when set', async () => {
+      useRuntimeConfig.mockReturnValue({
+        redis: {
+          host: '127.0.0.1',
+          port: 6379,
+          lazyConnect: true,
+        },
+      })
+
+      const api = useProcessor()
+      const queue = api.createQueue('lazy-true')
+      const worker = api.createWorker('lazy-true', async () => {})
+
+      expect(queue.opts.connection).toEqual({
+        host: '127.0.0.1',
+        port: 6379,
+        lazyConnect: true,
+      })
+      expect(worker.opts.connection).toEqual({
+        host: '127.0.0.1',
+        port: 6379,
+        lazyConnect: true,
+        maxRetriesPerRequest: null,
+      })
+
+      await api.stopAll()
+    })
+
+    it('passes lazyConnect false when explicitly set', async () => {
+      useRuntimeConfig.mockReturnValue({
+        redis: {
+          host: 'redis.internal',
+          port: 6381,
+          lazyConnect: false,
+        },
+      })
+
+      const api = useProcessor()
+      const queue = api.createQueue('lazy-false')
+      const worker = api.createWorker('lazy-false', async () => {})
+
+      expect(queue.opts.connection).toMatchObject({ lazyConnect: false })
+      expect(worker.opts.connection).toMatchObject({ lazyConnect: false })
+
+      await api.stopAll()
+    })
+
+    it('passes connectTimeout to queues and workers when set', async () => {
+      useRuntimeConfig.mockReturnValue({
+        redis: {
+          host: '127.0.0.1',
+          port: 6379,
+          connectTimeout: 15_000,
+        },
+      })
+
+      const api = useProcessor()
+      const queue = api.createQueue('timeout-queue')
+      const worker = api.createWorker('timeout-queue', async () => {})
+
+      expect(queue.opts.connection).toEqual({
+        host: '127.0.0.1',
+        port: 6379,
+        connectTimeout: 15_000,
+      })
+      expect(worker.opts.connection).toEqual({
+        host: '127.0.0.1',
+        port: 6379,
+        connectTimeout: 15_000,
+        maxRetriesPerRequest: null,
+      })
+
+      await api.stopAll()
+    })
+
+    it('passes lazyConnect and connectTimeout together (e.g. from REDIS_* / NUXT_REDIS_*)', async () => {
+      useRuntimeConfig.mockReturnValue({
+        redis: {
+          host: 'redis.internal',
+          port: 6381,
+          username: 'acl-user',
+          lazyConnect: true,
+          connectTimeout: 12_000,
+        },
+      })
+
+      const api = useProcessor()
+      const queue = api.createQueue('opts-queue')
+      const worker = api.createWorker('opts-queue', async () => {})
+
+      expect(queue.opts.connection).toEqual({
         host: 'redis.internal',
         port: 6381,
         username: 'acl-user',
-        lazyConnect: false,
+        lazyConnect: true,
         connectTimeout: 12_000,
-      },
-    })
+      })
+      expect(worker.opts.connection).toEqual({
+        ...queue.opts.connection,
+        maxRetriesPerRequest: null,
+      })
 
-    const api = useProcessor()
-    const queue = api.createQueue('opts-queue')
-    const worker = api.createWorker('opts-queue', async () => {})
-
-    expect(queue.opts.connection).toEqual({
-      host: 'redis.internal',
-      port: 6381,
-      username: 'acl-user',
-      lazyConnect: false,
-      connectTimeout: 12_000,
+      await api.stopAll()
     })
-    expect(worker.opts.connection).toEqual({
-      ...queue.opts.connection,
-      maxRetriesPerRequest: null,
-    })
-
-    await api.stopAll()
   })
 
-  it('defaults lazyConnect to true when redis.lazyConnect is empty', async () => {
+  it('omits lazyConnect when redis.lazyConnect is empty', async () => {
     useRuntimeConfig.mockReturnValue({
       redis: {
         host: '127.0.0.1',
@@ -146,8 +221,8 @@ describe('useProcessor registry', () => {
     expect(queue.opts.connection).toEqual({
       host: '127.0.0.1',
       port: 6379,
-      lazyConnect: true,
     })
+    expect(queue.opts.connection).not.toHaveProperty('lazyConnect')
 
     await api.stopAll()
   })
@@ -171,8 +246,8 @@ describe('useProcessor registry', () => {
     expect(queue.opts.connection).toEqual({
       host: '127.0.0.1',
       port: 6379,
-      lazyConnect: true,
     })
+    expect(queue.opts.connection).not.toHaveProperty('lazyConnect')
     expect(queue.opts.connection).not.toHaveProperty('url')
     expect(queue.opts.connection).not.toHaveProperty('password')
     expect(queue.opts.connection).not.toHaveProperty('username')
@@ -194,14 +269,12 @@ describe('useProcessor registry', () => {
       url: 'redis://localhost:6379/0',
       password: 'secret',
       db: 1,
-      lazyConnect: true,
     }))
     expect((queue.opts.connection as unknown as { maxRetriesPerRequest?: unknown }).maxRetriesPerRequest).toBeUndefined()
     expect(worker.opts.connection).toEqual(expect.objectContaining({
       url: 'redis://localhost:6379/0',
       password: 'secret',
       db: 1,
-      lazyConnect: true,
       maxRetriesPerRequest: null,
     }))
   })

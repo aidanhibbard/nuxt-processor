@@ -3,7 +3,7 @@ import { Queue, Worker } from 'bullmq'
 import { useRuntimeConfig } from 'nitropack/runtime'
 
 function resolveConnection(type: 'queue' | 'worker'): ConnectionOptions {
-  const { redis } = useRuntimeConfig() as { redis?: Record<string, unknown> }
+  const { redis } = useRuntimeConfig()
   const connection: Record<string, unknown> = {}
 
   if (redis) {
@@ -29,9 +29,29 @@ interface WorkersRegistry {
   workers: Array<Worker<any, any, any>>
 }
 
-const registry: WorkersRegistry = {
-  queues: [],
-  workers: [],
+interface ProcessorState {
+  registry?: WorkersRegistry
+}
+
+/** Nitro may bundle top-level defineQueue() before module-level bindings here; use only globals inside this function. */
+function getProcessorState(): ProcessorState {
+  const key = Symbol.for('nuxt-processor.state')
+  const g = globalThis as typeof globalThis & { [key: symbol]: ProcessorState | undefined }
+  if (!g[key]) {
+    g[key] = {}
+  }
+  return g[key]
+}
+
+function getRegistry(): WorkersRegistry {
+  const state = getProcessorState()
+  if (!state.registry) {
+    state.registry = {
+      queues: [],
+      workers: [],
+    }
+  }
+  return state.registry
 }
 
 export function useProcessor() {
@@ -49,7 +69,7 @@ export function useProcessor() {
       connection: resolveConnection('queue'),
       ...options,
     })
-    registry.queues.push(queue)
+    getRegistry().queues.push(queue)
     return queue
   }
 
@@ -69,21 +89,22 @@ export function useProcessor() {
       ...options,
       autorun: false,
     })
-    registry.workers.push(worker)
+    getRegistry().workers.push(worker)
     return worker
   }
 
   async function stopAll() {
-    await Promise.allSettled(registry.workers.map(w => w.close()))
-    await Promise.allSettled(registry.queues.map(q => q.close()))
+    const state = getRegistry()
+    await Promise.allSettled(state.workers.map(w => w.close()))
+    await Promise.allSettled(state.queues.map(q => q.close()))
   }
 
   return {
     createQueue,
     createWorker,
     stopAll,
-    get queues() { return registry.queues },
-    get workers() { return registry.workers },
+    get queues() { return getRegistry().queues },
+    get workers() { return getRegistry().workers },
   }
 }
 

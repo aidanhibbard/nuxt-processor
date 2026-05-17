@@ -41,9 +41,34 @@ describe('defineWorker', () => {
     expect(worker.opts.connection).toEqual(expect.objectContaining({
       host: 'localhost',
       port: 6379,
-      lazyConnect: true,
+      maxRetriesPerRequest: null,
     }))
+    expect(worker.opts.connection).not.toHaveProperty('lazyConnect')
     expect(worker.opts.autorun).toBe(false)
+
+    await api.stopAll()
+  })
+
+  it('passes lazyConnect and connectTimeout from runtimeConfig', async () => {
+    useRuntimeConfig.mockReturnValue({
+      redis: {
+        host: 'localhost',
+        port: 6379,
+        lazyConnect: true,
+        connectTimeout: 10_000,
+      },
+    })
+
+    const api = useProcessor()
+    const worker = defineWorker({ name: 'email', processor: async () => {} })
+
+    expect(worker.opts.connection).toEqual(expect.objectContaining({
+      host: 'localhost',
+      port: 6379,
+      lazyConnect: true,
+      connectTimeout: 10_000,
+      maxRetriesPerRequest: null,
+    }))
 
     await api.stopAll()
   })

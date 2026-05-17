@@ -38,7 +38,30 @@ describe('defineQueue', () => {
     expect(queue.opts.connection).toEqual(expect.objectContaining({
       host: 'localhost',
       port: 6379,
+    }))
+    expect(queue.opts.connection).not.toHaveProperty('lazyConnect')
+
+    await api.stopAll()
+  })
+
+  it('passes lazyConnect and connectTimeout from runtimeConfig', async () => {
+    useRuntimeConfig.mockReturnValue({
+      redis: {
+        host: 'localhost',
+        port: 6379,
+        lazyConnect: true,
+        connectTimeout: 10_000,
+      },
+    })
+
+    const api = useProcessor()
+    const queue = defineQueue({ name: 'email' })
+
+    expect(queue.opts.connection).toEqual(expect.objectContaining({
+      host: 'localhost',
+      port: 6379,
       lazyConnect: true,
+      connectTimeout: 10_000,
     }))
 
     await api.stopAll()
