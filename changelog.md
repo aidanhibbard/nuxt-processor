@@ -1,18 +1,23 @@
-## v1.2.0
+## v2.0.0-beta.0
 
-[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v1.1.0...HEAD)
+[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v1.1.0...v2.0.0-beta.0)
+
+> **Beta:** install with `npm install nuxt-processor@beta`. Breaking vs 1.x — see [upgrading guide](https://aidanhibbard.github.io/nuxt-processor/upgrading).
 
 ### ⚠️ Breaking Changes
 
 - **Redis configuration** — remove `processor.redis` from module options; use `runtimeConfig.redis` and/or `REDIS_*` (dev/build) and `NUXT_REDIS_*` (runtime). See [upgrading guide](https://aidanhibbard.github.io/nuxt-processor/upgrading).
 - **Workers registry** — rename `$workers()` to `useProcessor()`; remove `setConnection()`. Connection is resolved from `useRuntimeConfig().redis` when each queue or worker is created.
 - **Nitro plugin** — remove the plugin that called `setConnection()` and overrode `process.env.REDIS_URL` at runtime.
-- **Worker entry** — generated workers bundle no longer calls `setConnection()` at startup; Redis comes from runtime config like the main server.
+- **Worker entry** — generated workers bundle no longer calls `setConnection()` at startup; Redis comes from runtime config like the main server. Shutdown uses `useProcessor().stopAll()`.
 
 ### 🚀 Enhancements
 
 - Resolve Redis at queue/worker creation time (fixes `ECONNREFUSED 127.0.0.1:6379` when queues are imported before a Nitro plugin runs, e.g. Bull Board or Docker).
 - Add `buildRedisRuntimeConfig()` with `defu` merge: user `runtimeConfig.redis` overrides `REDIS_*` env at module setup.
+- Normalize runtime connection options (`port` / `db` / `connectTimeout` coercion; `lazyConnect` from `true`/`false` strings via `NUXT_REDIS_*`).
+- Shared registry on `globalThis` so top-level `defineQueue()` works when Nitro bundles modules out of order.
+- `stopAll()` closes all registered queues/workers and clears the registry (safe for dev reload and worker shutdown).
 - Set `maxRetriesPerRequest: null` on worker connections only (BullMQ blocking client requirement).
 - Ship markdown docs in the npm package under `docs/` for tooling and LLMs.
 
@@ -23,7 +28,9 @@
 
 ### 🧪 Tests
 
-- Add `spec/utils/redis-runtime-config.spec.ts`; expand `spec/runtime/utils/workers.spec.ts` for connection options and worker `maxRetriesPerRequest`.
+- Add `spec/utils/redis-runtime-config.spec.ts`, `spec/utils/normalize-redis-connection.spec.ts`, and `spec/scripts/assert-baked-redis-empty.spec.ts`.
+- Expand `spec/runtime/utils/workers.spec.ts` for connection options, registry lifecycle, and worker `maxRetriesPerRequest`.
+- Add `npm run test:docker` — build image without Redis env, assert baked `nitro.mjs`, run runtime scenarios (`NUXT_REDIS_URL`, host/port, password, options).
 
 ### 💅 Refactors
 
