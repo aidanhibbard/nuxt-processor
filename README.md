@@ -26,6 +26,8 @@ Note: This package is under very active development! Please consider creating is
 
 ## Used by
 
+Also using Nuxt Processor? Open an issue to get your businesses logo added below!
+
 <div>
   <a href="https://getminds.ai/" target="_blank" rel="noreferrer">
     <img src="https://getminds.ai/favicon.ico" alt="Minds AI" height="72" />
