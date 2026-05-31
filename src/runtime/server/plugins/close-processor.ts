@@ -6,7 +6,8 @@ const logger = consola.create({}).withTag('nuxt-processor')
 
 export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('close', async () => {
-    const { ok, errors } = await useProcessor().stopAll()
+    const { stopAll } = useProcessor()
+    const { ok, errors } = await stopAll()
     if (!ok) {
       for (const error of errors) {
         logger.error('Failed to close processor resource on Nitro shutdown', error)
