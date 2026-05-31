@@ -1,5 +1,9 @@
 ## Unreleased
 
+## v2.1.0
+
+[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v2.0.0...v2.1.0)
+
 ### 🚀 Enhancements
 
 - Set `enableOfflineQueue: false` on queue connections so producers fail fast when Redis is unavailable (BullMQ recommendation).
