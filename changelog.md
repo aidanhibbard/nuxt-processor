@@ -1,3 +1,21 @@
+## Unreleased
+
+### 🚀 Enhancements
+
+- Set `enableOfflineQueue: false` on queue connections so producers fail fast when Redis is unavailable (BullMQ recommendation).
+- Log queue and worker `error` events via consola.
+- Improve `stopAll()`: returns `{ ok, errors }`, logs close failures, supports `{ force: true }` for `worker.close(force)`.
+- Register Nitro `close` plugin to call `stopAll()` when the Nuxt server shuts down.
+- Worker process shutdown: 25s graceful timeout, then force stop; non-zero exit on shutdown failure.
+
+### 📖 Documentation
+
+- Document `StopAllOptions` / `StopAllResult`, producer fail-fast, and Nitro shutdown in `docs/api.md` and `docs/redis.md`.
+
+### 🧪 Tests
+
+- Add specs for `close-processor` plugin, `generateWorkersIndexWrapper`, and expanded `stopAll` / connection behavior.
+
 ## v2.0.0
 
 [compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v1.1.0...v2.0.0)

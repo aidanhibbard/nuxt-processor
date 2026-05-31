@@ -117,6 +117,17 @@ You can also set any of these in `runtimeConfig.redis` in `nuxt.config` (wins ov
 
 If no host/url/port options apply after the precedence above, [ioredis](https://github.com/redis/ioredis) uses `127.0.0.1:6379`. Empty strings in config are ignored so unset keys do not block fallbacks.
 
+## Connection behavior (BullMQ)
+
+The module applies [BullMQ production defaults](https://docs.bullmq.io/guide/going-to-production) when creating queues and workers:
+
+| Role | Setting | Why |
+| --- | --- | --- |
+| **Queue** (producer) | `enableOfflineQueue: false` | `queue.add()` fails fast when Redis is down instead of hanging until reconnect ([failing fast](https://docs.bullmq.io/patterns/failing-fast-when-redis-is-down)) |
+| **Worker** (consumer) | `maxRetriesPerRequest: null` | Required for BullMQ blocking worker connections |
+
+Queue and worker `error` events are logged with the `nuxt-processor` tag. On Nitro server shutdown, the module closes all registered queues and workers via `stopAll()`.
+
 ## Module options
 
 See [API — Module options](/api#module-options).

@@ -1,10 +1,11 @@
-import { defineNuxtModule, createResolver, addTypeTemplate } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addTypeTemplate, addServerPlugin } from '@nuxt/kit'
 import { name, version, configKey, compatibility } from '../package.json'
 import { buildRedisRuntimeConfig } from './utils/redis-runtime-config'
 import type { Plugin } from 'rollup'
 import { relative } from 'node:path'
 import scanFolder from './utils/scan-folder'
 import { generateWorkersEntryContent } from './utils/generate-workers-entry-content'
+import { generateWorkersIndexWrapper } from './utils/generate-workers-index-wrapper'
 
 export interface ModuleOptions {
   /**
@@ -38,6 +39,7 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.alias['nuxt-processor'] = resolve('./runtime/server/handlers')
     nuxt.options.alias['#processor'] = resolve('./runtime/server/handlers')
     nuxt.options.alias['#processor-utils'] = resolve('./runtime/server/utils')
+    addServerPlugin(resolve('./runtime/server/plugins/close-processor'))
     if (!nuxt.options.alias['#bullmq']) {
       nuxt.options.alias['#bullmq'] = 'bullmq'
     }
@@ -98,13 +100,7 @@ declare module '@nuxt/schema' {
           const entryFile = this.getFileName(entryRefId)
           const fromDir = 'workers'
           const rel = './' + relative(fromDir, entryFile).split('\\').join('/')
-          const wrapper = `import { createWorkersApp } from '${rel}'\n`
-            + `import { consola } from 'consola'\n`
-            + `const logger = consola.create({}).withTag('nuxt-processor')\n`
-            + `const appPromise = createWorkersApp().catch((err) => { logger.error('failed to start workers', err); process.exit(1) })\n`
-            + `let shuttingDown = false\n`
-            + `const shutdown = async (signal) => { if (shuttingDown) return; shuttingDown = true; try { logger.info('closing workers' + (signal ? ' ('+signal+')' : '') + '...') } catch (e) { console.warn('nuxt-processor: failed to log shutdown start', e) } ; try { const app = await appPromise; try { const names = (app?.workers || []).map(w => w && w.name).filter(Boolean); logger.info('closing workers:\\n' + names.map(n => ' - ' + n).join('\\n')) } catch (eL) { console.warn('nuxt-processor: failed to log workers list on shutdown', eL) } await app.stop(); try { logger.success('workers closed') } catch (e2) { console.warn('nuxt-processor: failed to log shutdown complete', e2) } } catch (err) { try { logger.error('shutdown error', err) } catch (e3) { console.warn('nuxt-processor: failed to log shutdown error', e3) } } finally { setTimeout(() => process.exit(0), 0) } }\n`
-            + `[ 'SIGINT','SIGTERM','SIGQUIT' ].forEach(sig => process.on(sig, () => shutdown(sig)))\n`
+          const wrapper = generateWorkersIndexWrapper(rel)
           this.emitFile({ type: 'asset', fileName: 'workers/index.mjs', source: wrapper })
         },
       }

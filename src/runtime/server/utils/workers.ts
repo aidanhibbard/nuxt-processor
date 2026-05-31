@@ -1,7 +1,19 @@
 import type { Job, JobsOptions, QueueOptions, WorkerOptions, Processor, ConnectionOptions } from 'bullmq'
 import { Queue, Worker } from 'bullmq'
+import { consola } from 'consola'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { normalizeRedisConnectionEntry } from './normalize-redis-connection'
+
+const logger = consola.create({}).withTag('nuxt-processor')
+
+export interface StopAllOptions {
+  force?: boolean
+}
+
+export interface StopAllResult {
+  ok: boolean
+  errors: Error[]
+}
 
 function resolveConnection(type: 'queue' | 'worker'): ConnectionOptions {
   const { redis } = useRuntimeConfig()
@@ -17,7 +29,10 @@ function resolveConnection(type: 'queue' | 'worker'): ConnectionOptions {
     }
   }
 
-  if (type === 'worker') {
+  if (type === 'queue') {
+    connection.enableOfflineQueue = false
+  }
+  else if (type === 'worker') {
     connection.maxRetriesPerRequest = null
   }
 
@@ -60,6 +75,22 @@ function clearRegistry(): void {
   getProcessorState().registry = undefined
 }
 
+function collectCloseErrors(
+  results: PromiseSettledResult<void>[],
+  kind: 'worker' | 'queue',
+  errors: Error[],
+): void {
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      const error = result.reason instanceof Error
+        ? result.reason
+        : new Error(String(result.reason))
+      errors.push(error)
+      logger.error(`Failed to close ${kind}`, error)
+    }
+  }
+}
+
 export function useProcessor() {
   function createQueue<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -74,6 +105,9 @@ export function useProcessor() {
     const queue = new Queue<DataTypeOrJob, DefaultResultType, DefaultNameType>(name, {
       connection: resolveConnection('queue'),
       ...options,
+    })
+    queue.on('error', (error: Error) => {
+      logger.error('Queue error', error)
     })
     getRegistry().queues.push(queue)
     return queue
@@ -95,15 +129,31 @@ export function useProcessor() {
       ...options,
       autorun: false,
     })
+    worker.on('error', (error: Error) => {
+      logger.error('Worker error', error)
+    })
     getRegistry().workers.push(worker)
     return worker
   }
 
-  async function stopAll() {
+  async function stopAll(options?: StopAllOptions): Promise<StopAllResult> {
     const state = getRegistry()
-    await Promise.allSettled(state.workers.map(w => w.close()))
-    await Promise.allSettled(state.queues.map(q => q.close()))
+    const force = options?.force ?? false
+    const errors: Error[] = []
+
+    const workerResults = await Promise.allSettled(
+      state.workers.map(worker => worker.close(force)),
+    )
+    collectCloseErrors(workerResults, 'worker', errors)
+
+    const queueResults = await Promise.allSettled(
+      state.queues.map(queue => queue.close()),
+    )
+    collectCloseErrors(queueResults, 'queue', errors)
+
     clearRegistry()
+
+    return { ok: errors.length === 0, errors }
   }
 
   return {

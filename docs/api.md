@@ -182,7 +182,13 @@ const worker = createWorker('emails', async job => {
 })
 
 // later
-await stopAll()
+const { ok, errors } = await stopAll()
+if (!ok) {
+  console.error('Failed to close some BullMQ resources', errors)
+}
+
+// force-close workers (e.g. after shutdown timeout in the workers process)
+await stopAll({ force: true })
 ```
 
 ### Signature
@@ -208,14 +214,28 @@ function useProcessor(): {
     options?: Omit<WorkerOptions, 'connection'>,
   ): Worker<DataType, ResultType, NameType>
 
-  stopAll(): Promise<void>
+  stopAll(options?: StopAllOptions): Promise<StopAllResult>
 
   readonly queues: Queue[]
   readonly workers: Worker[]
 }
+
+interface StopAllOptions {
+  /** Passed to `worker.close(force)` when shutting down workers (BullMQ graceful shutdown). */
+  force?: boolean
+}
+
+interface StopAllResult {
+  ok: boolean
+  errors: Error[]
+}
 ```
 
-Workers created via `createWorker` use `autorun: false`. The generated workers entry calls `.run()` on each worker.
+Queues created via `createQueue` use `enableOfflineQueue: false` on the Redis connection so producers fail fast when Redis is unavailable ([BullMQ failing fast pattern](https://docs.bullmq.io/patterns/failing-fast-when-redis-is-down)). Queue and worker `error` events are logged with the `nuxt-processor` tag.
+
+The module registers a Nitro plugin that calls `stopAll()` on server `close`, so queues opened in the Nuxt app process are closed on shutdown.
+
+Workers created via `createWorker` use `autorun: false`. The generated workers entry calls `.run()` on each worker. Worker shutdown uses a 25s graceful timeout, then `stopAll({ force: true })` if needed.
 
 ---
 
@@ -248,7 +268,7 @@ Emitted inside the workers bundle (not imported from the package directly):
 ```ts
 function createWorkersApp(): Promise<{
   workers: Worker[]
-  stop(): Promise<void>
+  stop(options?: StopAllOptions): Promise<StopAllResult>
 }>
 ```
 

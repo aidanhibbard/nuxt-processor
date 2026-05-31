@@ -55,7 +55,7 @@ describe('generate-workers-entry-content', () => {
     const content = generateWorkersEntryContent(
       ['/path/to/worker.mjs'],
     )
-    expect(content).toContain('return { stop: () => api.stopAll(), workers: workersToRun }')
+    expect(content).toContain('return { stop: (opts) => api.stopAll(opts), workers: workersToRun }')
     expect(content).not.toContain('closeRunningWorkers')
   })
 
