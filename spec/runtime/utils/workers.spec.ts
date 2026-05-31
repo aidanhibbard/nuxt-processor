@@ -4,6 +4,20 @@ import { useProcessor, type Processor } from '../../../src/runtime/server/utils/
 
 const useRuntimeConfig = vi.fn()
 
+const { mockConsolaError } = vi.hoisted(() => ({
+  mockConsolaError: vi.fn(),
+}))
+
+vi.mock('consola', () => ({
+  consola: {
+    create: () => ({
+      withTag: () => ({
+        error: mockConsolaError,
+      }),
+    }),
+  },
+}))
+
 vi.mock('nitropack/runtime', () => ({
   useRuntimeConfig: () => useRuntimeConfig(),
 }))
@@ -17,6 +31,7 @@ vi.mock('bullmq', () => {
       this.opts = opts
     }
 
+    on = vi.fn()
     close = vi.fn().mockResolvedValue(undefined)
   }
 
@@ -40,6 +55,7 @@ vi.mock('bullmq', () => {
 
 describe('useProcessor registry', () => {
   beforeEach(async () => {
+    mockConsolaError.mockClear()
     useRuntimeConfig.mockReturnValue({ redis: { host: '127.0.0.1', port: 6379 } })
     await useProcessor().stopAll()
   })
@@ -54,6 +70,7 @@ describe('useProcessor registry', () => {
     expect(queue.opts.connection).toEqual(expect.objectContaining({
       host: '127.0.0.1',
       port: 6379,
+      enableOfflineQueue: false,
     }))
     expect(queue.opts.connection).not.toHaveProperty('lazyConnect')
     expect((queue.opts.connection as unknown as { maxRetriesPerRequest?: unknown }).maxRetriesPerRequest).toBeUndefined()
@@ -63,6 +80,7 @@ describe('useProcessor registry', () => {
       port: 6379,
       maxRetriesPerRequest: null,
     }))
+    expect(worker.opts.connection).not.toHaveProperty('enableOfflineQueue')
     expect(worker.opts.connection).not.toHaveProperty('lazyConnect')
     expect(worker.opts.autorun).toBe(false)
 
@@ -91,6 +109,7 @@ describe('useProcessor registry', () => {
       host: '127.0.0.1',
       port: 6379,
       url: 'redis://user:pass@localhost:6379/0',
+      enableOfflineQueue: false,
     })
     expect(worker.opts.connection).toEqual({
       host: '127.0.0.1',
@@ -118,6 +137,7 @@ describe('useProcessor registry', () => {
         host: '127.0.0.1',
         port: 6379,
         lazyConnect: true,
+        enableOfflineQueue: false,
       })
       expect(worker.opts.connection).toEqual({
         host: '127.0.0.1',
@@ -165,6 +185,7 @@ describe('useProcessor registry', () => {
         host: '127.0.0.1',
         port: 6379,
         connectTimeout: 15_000,
+        enableOfflineQueue: false,
       })
       expect(worker.opts.connection).toEqual({
         host: '127.0.0.1',
@@ -197,11 +218,17 @@ describe('useProcessor registry', () => {
         username: 'acl-user',
         lazyConnect: true,
         connectTimeout: 12_000,
+        enableOfflineQueue: false,
       })
       expect(worker.opts.connection).toEqual({
-        ...queue.opts.connection,
+        host: 'redis.internal',
+        port: 6381,
+        username: 'acl-user',
+        lazyConnect: true,
+        connectTimeout: 12_000,
         maxRetriesPerRequest: null,
       })
+      expect(worker.opts.connection).not.toHaveProperty('enableOfflineQueue')
 
       await api.stopAll()
     })
@@ -222,6 +249,7 @@ describe('useProcessor registry', () => {
     expect(queue.opts.connection).toEqual({
       host: '127.0.0.1',
       port: 6379,
+      enableOfflineQueue: false,
     })
     expect(queue.opts.connection).not.toHaveProperty('lazyConnect')
 
@@ -244,6 +272,7 @@ describe('useProcessor registry', () => {
       host: 'redis.internal',
       port: 6381,
       db: 2,
+      enableOfflineQueue: false,
     })
 
     await api.stopAll()
@@ -265,6 +294,7 @@ describe('useProcessor registry', () => {
       host: '127.0.0.1',
       port: 6379,
       lazyConnect: false,
+      enableOfflineQueue: false,
     })
 
     await api.stopAll()
@@ -289,6 +319,7 @@ describe('useProcessor registry', () => {
     expect(queue.opts.connection).toEqual({
       host: '127.0.0.1',
       port: 6379,
+      enableOfflineQueue: false,
     })
     expect(queue.opts.connection).not.toHaveProperty('lazyConnect')
     expect(queue.opts.connection).not.toHaveProperty('url')
@@ -312,6 +343,7 @@ describe('useProcessor registry', () => {
       url: 'redis://localhost:6379/0',
       password: 'secret',
       db: 1,
+      enableOfflineQueue: false,
     }))
     expect((queue.opts.connection as unknown as { maxRetriesPerRequest?: unknown }).maxRetriesPerRequest).toBeUndefined()
     expect(worker.opts.connection).toEqual(expect.objectContaining({
@@ -357,5 +389,59 @@ describe('useProcessor registry', () => {
     expect(api.workers).toEqual(expect.arrayContaining([w1, w2]))
 
     await api.stopAll()
+  })
+
+  it('sets enableOfflineQueue false on queue connections only', async () => {
+    const api = useProcessor()
+    const queue = api.createQueue('offline-queue')
+    const worker = api.createWorker('offline-queue', async () => {})
+
+    expect(queue.opts.connection).toMatchObject({ enableOfflineQueue: false })
+    expect(worker.opts.connection).not.toHaveProperty('enableOfflineQueue')
+
+    await api.stopAll()
+  })
+
+  it('attaches queue error handler on createQueue', async () => {
+    const api = useProcessor()
+    const queue = api.createQueue('error-handler-q')
+
+    expect(queue.on).toHaveBeenCalledWith('error', expect.any(Function))
+
+    await api.stopAll()
+  })
+
+  it('attaches worker error handler on createWorker', async () => {
+    const api = useProcessor()
+    const worker = api.createWorker('error-handler-w', async () => {})
+
+    expect(worker.on).toHaveBeenCalledWith('error', expect.any(Function))
+
+    await api.stopAll()
+  })
+
+  it('stopAll logs and returns errors when close fails', async () => {
+    const api = useProcessor()
+    const queue = api.createQueue('fail-q')
+    const worker = api.createWorker('fail-q', async () => {})
+    const closeError = new Error('close failed')
+    vi.mocked(worker.close).mockRejectedValueOnce(closeError)
+
+    const result = await api.stopAll()
+
+    expect(result).toEqual({ ok: false, errors: [closeError] })
+    expect(mockConsolaError).toHaveBeenCalledWith('Failed to close worker', closeError)
+    expect(queue.close).toHaveBeenCalled()
+    expect(api.queues).toEqual([])
+    expect(api.workers).toEqual([])
+  })
+
+  it('stopAll({ force: true }) passes force to worker.close', async () => {
+    const api = useProcessor()
+    const worker = api.createWorker('force-q', async () => {})
+
+    await api.stopAll({ force: true })
+
+    expect(worker.close).toHaveBeenCalledWith(true)
   })
 })

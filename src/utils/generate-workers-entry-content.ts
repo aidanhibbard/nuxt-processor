@@ -57,7 +57,7 @@ logger.success('workers started')
 } catch (err) {
 logger.error('failed to initialize workers', err)
 }
-return { stop: () => api.stopAll(), workers: workersToRun }
+return { stop: (opts) => api.stopAll(opts), workers: workersToRun }
 }
 
 export default { createWorkersApp }

@@ -5,6 +5,16 @@ import { useProcessor, type Processor, type WorkerOptions } from '../../../src/r
 
 const useRuntimeConfig = vi.fn()
 
+vi.mock('consola', () => ({
+  consola: {
+    create: () => ({
+      withTag: () => ({
+        error: vi.fn(),
+      }),
+    }),
+  },
+}))
+
 vi.mock('nitropack/runtime', () => ({
   useRuntimeConfig: () => useRuntimeConfig(),
 }))
@@ -28,8 +38,9 @@ vi.mock('bullmq', () => {
 })
 
 describe('defineWorker', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     useRuntimeConfig.mockReturnValue({ redis: { host: 'localhost', port: 6379 } })
+    await useProcessor().stopAll()
   })
 
   it('creates a worker using runtimeConfig redis', async () => {
@@ -45,6 +56,7 @@ describe('defineWorker', () => {
     }))
     expect(worker.opts.connection).not.toHaveProperty('lazyConnect')
     expect(worker.opts.autorun).toBe(false)
+    expect(worker.on).toHaveBeenCalledWith('error', expect.any(Function))
 
     await api.stopAll()
   })

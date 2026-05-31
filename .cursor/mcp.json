@@ -2,6 +2,9 @@
   "mcpServers": {
     "nuxt-docs": {
       "url": "https://nuxt.com/mcp"
+    },
+    "bullmq-docs": {
+      "url": "https://docs.bullmq.io/~gitbook/mcp"
     }
   }
 }

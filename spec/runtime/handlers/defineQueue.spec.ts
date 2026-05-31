@@ -5,6 +5,16 @@ import { useProcessor, type QueueOptions } from '../../../src/runtime/server/uti
 
 const useRuntimeConfig = vi.fn()
 
+vi.mock('consola', () => ({
+  consola: {
+    create: () => ({
+      withTag: () => ({
+        error: vi.fn(),
+      }),
+    }),
+  },
+}))
+
 vi.mock('nitropack/runtime', () => ({
   useRuntimeConfig: () => useRuntimeConfig(),
 }))
@@ -19,14 +29,16 @@ vi.mock('bullmq', () => {
     }
 
     add = vi.fn().mockResolvedValue(undefined)
+    on = vi.fn()
     close = vi.fn().mockResolvedValue(undefined)
   }
   return { Queue: MockQueue }
 })
 
 describe('defineQueue', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     useRuntimeConfig.mockReturnValue({ redis: { host: 'localhost', port: 6379 } })
+    await useProcessor().stopAll()
   })
 
   it('creates a queue using runtimeConfig redis', async () => {
@@ -38,8 +50,10 @@ describe('defineQueue', () => {
     expect(queue.opts.connection).toEqual(expect.objectContaining({
       host: 'localhost',
       port: 6379,
+      enableOfflineQueue: false,
     }))
     expect(queue.opts.connection).not.toHaveProperty('lazyConnect')
+    expect(queue.on).toHaveBeenCalledWith('error', expect.any(Function))
 
     await api.stopAll()
   })
@@ -62,6 +76,7 @@ describe('defineQueue', () => {
       port: 6379,
       lazyConnect: true,
       connectTimeout: 10_000,
+      enableOfflineQueue: false,
     }))
 
     await api.stopAll()
