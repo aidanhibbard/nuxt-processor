@@ -1,5 +1,9 @@
 ## Unreleased
 
+### 📖 Documentation
+
+- Replace the Bull Board playground/docs example with Durabull setup guidance.
+
 ## v2.1.0
 
 [compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v2.0.0...v2.1.0)

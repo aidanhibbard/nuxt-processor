@@ -24,7 +24,7 @@ export default defineConfig({
           { text: 'Redis configuration', link: '/redis' },
           { text: 'Define Queue', link: '/define-queue' },
           { text: 'Define Worker', link: '/define-worker' },
-          { text: 'Bull Board', link: '/bull-board' },
+          { text: 'Durabull', link: '/durabull' },
         ],
       },
       {

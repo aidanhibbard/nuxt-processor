@@ -132,6 +132,6 @@ To run only specific workers in production:
 node .output/server/workers/index.mjs --workers=basic,hello
 ```
 
-## Bull Board
+## Durabull
 
-See the dedicated page: [Bull Board](/bull-board)
+See the dedicated page: [Durabull](/durabull)

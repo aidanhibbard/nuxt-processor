@@ -17,8 +17,8 @@ hero:
       text: Upgrading
       link: /upgrading
     - theme: alt
-      text: Bull Board
-      link: /bull-board
+      text: Durabull
+      link: /durabull
 
 features:
   - title: "🚀 Dedicated processing"
