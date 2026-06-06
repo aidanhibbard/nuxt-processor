@@ -19,7 +19,7 @@ If you are already on **2.0.0-beta** with `runtimeConfig.redis` / `REDIS_*` / `N
 
 ### 1. Connection timing (Docker and eager imports)
 
-Previously, Redis was applied in a Nitro plugin via `$workers().setConnection()`. Queues and workers created **before** that plugin ran (top-level imports, handlers loaded early) saw an **empty** connection and fell back to ioredis defaults (`127.0.0.1:6379`). That showed up in production as `ECONNREFUSED 127.0.0.1:6379` even when `REDIS_URL` or `processor.redis` looked correct — especially in Docker and with routes like Bull Board that import queues at load time.
+Previously, Redis was applied in a Nitro plugin via `$workers().setConnection()`. Queues and workers created **before** that plugin ran (top-level imports, handlers loaded early) saw an **empty** connection and fell back to ioredis defaults (`127.0.0.1:6379`). That showed up in production as `ECONNREFUSED 127.0.0.1:6379` even when `REDIS_URL` or `processor.redis` looked correct — especially in Docker and with routes that import queues at load time.
 
 The fix is to resolve Redis from **`useRuntimeConfig().redis` when each queue/worker is created**, not from a one-time plugin callback.
 

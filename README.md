@@ -43,7 +43,7 @@ Also using Nuxt Processor? Open an issue to get your businesses logo added below
 - [Define a worker](#define-a-worker)
 - [Running](#running)
 - [CLI](#cli)
-- [Bull Board](#bull-board)
+- [Durabull](#durabull)
 - [Contribution](#contribution)
 
 ## Install
@@ -199,17 +199,26 @@ To run only specific workers in production:
 node .output/server/workers/index.mjs --workers=basic,hello
 ```
 
-## Bull Board
+## Durabull
 
-[Bull Board](https://github.com/felixmosh/bull-board) is an excellent UI for watching your queues, you can follow the setup in the playground to use it.
+[Durabull](https://durabull.io) is a modern BullMQ dashboard for watching queues, inspecting jobs, and debugging failures. Run it alongside your Nuxt app and point it at the same Redis connection used by Nuxt Processor:
 
-- [Server handler](./playground/server/handlers/bull-board.ts)
-- [Route: `playground/server/routes/bull-board.ts`](./playground/server/routes/bull-board.ts)
-- [Route: `playground/server/routes/bull-board/[...].ts`](./playground/server/routes/bull-board/%5B...%5D.ts)
+```bash
+docker run --rm -p 127.0.0.1:3000:3000 \
+  -e DURABULL_AUTHLESS=true \
+  -e DURABULL_ENV_CONNECTIONS=true \
+  -e DURABULL_REDIS_URL_ENCRYPTION_KEY=$(openssl rand -hex 32) \
+  -e DURABULL_REDIS_URL_MAIN=redis://host.docker.internal:6379/0 \
+  -e DURABULL_REDIS_URL_MAIN_ENVIRONMENT=development \
+  -e DURABULL_REDIS_URL_DEFAULT=MAIN \
+  -e APP_BASE_URL=http://localhost:3000 \
+  -e VITE_PUBLIC_APP_URL=http://localhost:3000 \
+  ghcr.io/durabullhq/durabull:latest
+```
 
-Special thanks to [@genu](https://github.com/genu) for creating the H3 adapter.
+Then open `http://localhost:3000` and select the `MAIN` connection. If Redis runs in another container, put Durabull on the same Docker network and use that Redis service name instead of `host.docker.internal`.
 
-For more help getting set up, see this Bull Board H3 adapter comment: <https://github.com/felixmosh/bull-board/pull/669#issuecomment-1883997968>.
+For more options, see the dedicated [Durabull guide](https://aidanhibbard.github.io/nuxt-processor/durabull) and the [Durabull self-hosting docs](https://durabull.io/documentation/self-hosting/installation).
 
 ## Contribution
 
