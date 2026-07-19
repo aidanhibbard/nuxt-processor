@@ -15,7 +15,7 @@ export interface ModuleOptions {
   workers: string
   /**
    * Glob pattern relative to `workers`.
-   * @default '**/*.{ts,js,mjs}'
+   * @default '**\/*.{ts,js,mjs}'
    */
   workersPattern?: string
 }
