@@ -18,6 +18,17 @@ export interface ModuleOptions {
    * @default '**\/*.{ts,js,mjs}'
    */
   workersPattern?: string
+  /**
+   * Workers process shutdown settings.
+   */
+  shutdown?: {
+    /**
+     * Graceful shutdown timeout for the workers process (ms).
+     * After this duration, workers are force-closed.
+     * @default 25000
+     */
+    timeoutMs?: number
+  }
 }
 
 export default defineNuxtModule<ModuleOptions>({
@@ -108,7 +119,9 @@ declare module '@nuxt/schema' {
           const entryFile = this.getFileName(entryRefId)
           const fromDir = 'workers'
           const rel = './' + relative(fromDir, entryFile).split('\\').join('/')
-          const wrapper = generateWorkersIndexWrapper(rel)
+          const wrapper = generateWorkersIndexWrapper(rel, {
+            shutdownTimeoutMs: _options.shutdown?.timeoutMs,
+          })
           this.emitFile({ type: 'asset', fileName: 'workers/index.mjs', source: wrapper })
         },
       }

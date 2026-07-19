@@ -46,6 +46,21 @@ export default defineNuxtConfig({
 
 `workers` is the path to the workers directory (resolved from the project root). Globs belong in `workersPattern`, which is relative to that directory.
 
+Long-running jobs may need a longer graceful shutdown window in the workers process:
+
+```ts
+export default defineNuxtConfig({
+  modules: ['nuxt-processor'],
+  processor: {
+    shutdown: {
+      timeoutMs: 120_000,
+    },
+  },
+})
+```
+
+`shutdown.timeoutMs` only affects the standalone workers entry (`workers/index.mjs`), not Nitro server shutdown.
+
 ```ts
 interface ModuleOptions {
   /**
@@ -58,6 +73,17 @@ interface ModuleOptions {
    * @default '**/*.{ts,js,mjs}'
    */
   workersPattern?: string
+  /**
+   * Workers process shutdown settings.
+   */
+  shutdown?: {
+    /**
+     * Graceful shutdown timeout for the workers process (ms).
+     * After this duration, workers are force-closed.
+     * @default 25000
+     */
+    timeoutMs?: number
+  }
 }
 ```
 
@@ -254,7 +280,7 @@ Queues created via `createQueue` use `enableOfflineQueue: false` on the Redis co
 
 The module registers a Nitro plugin that calls `stopAll()` on server `close`, so queues opened in the Nuxt app process are closed on shutdown.
 
-Workers created via `createWorker` use `autorun: false`. The generated workers entry calls `.run()` on each worker. Worker shutdown uses a 25s graceful timeout, then `stopAll({ force: true })` if needed.
+Workers created via `createWorker` use `autorun: false`. The generated workers entry calls `.run()` on each worker. Worker shutdown uses a 25s graceful timeout by default (override with `processor.shutdown.timeoutMs`), then `stopAll({ force: true })` if needed.
 
 ---
 
