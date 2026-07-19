@@ -282,7 +282,7 @@ export default defineWorker({ name: 'hello', processor: async () => {} })
     const { main } = await importCli()
     await main({ rawArgs: ['workers', 'list', tmpDir, '--json'] })
 
-    const output = stdoutSpy.mock.calls.map(call => String(call[0])).join('')
+    const output = stdoutSpy.mock.calls.map((call: unknown[]) => String(call[0])).join('')
     const manifest = JSON.parse(output) as { workers: Array<{ name: string }>, selectedWorkers: string[] | null }
     expect(manifest.workers.map(worker => worker.name).sort()).toEqual(['basic', 'hello'])
     expect(manifest.selectedWorkers).toBeNull()
@@ -301,7 +301,7 @@ export default defineWorker({ name: 'hello', processor: async () => {} })
     const { main } = await importCli()
     await main({ rawArgs: ['workers', 'list', tmpDir, '--json', '--workers', 'hello'] })
 
-    const output = stdoutSpy.mock.calls.map(call => String(call[0])).join('')
+    const output = stdoutSpy.mock.calls.map((call: unknown[]) => String(call[0])).join('')
     const manifest = JSON.parse(output) as { workers: Array<{ name: string }>, selectedWorkers: string[] | null }
     expect(manifest.selectedWorkers).toEqual(['hello'])
     expect(manifest.workers.map(worker => worker.name)).toEqual(['hello'])

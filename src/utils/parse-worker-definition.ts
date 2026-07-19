@@ -70,7 +70,7 @@ function parseStringLiteral(value: string): string | null {
   if (!match) {
     return null
   }
-  return match[2]
+  return match[2] ?? null
 }
 
 function parseNumberLiteral(value: string): number | null {
@@ -243,7 +243,7 @@ function extractWorkerName(objectLiteral: string): string | null {
   if (!match) {
     return null
   }
-  return match[2]
+  return match[2] ?? null
 }
 
 export function parseWorkerDefinition(source: string): ParsedWorkerDefinition | null {
