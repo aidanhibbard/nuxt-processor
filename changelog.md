@@ -1,5 +1,9 @@
 ## Unreleased
 
+### 🚀 Enhancements
+
+- Add `processor.workersPattern` module option to customize the glob used when scanning the workers directory (default unchanged: `**/*.{ts,js,mjs}`).
+
 ### 📖 Documentation
 
 - Replace the Bull Board playground/docs example with Durabull setup guidance.

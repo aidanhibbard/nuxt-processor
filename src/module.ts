@@ -9,11 +9,15 @@ import { generateWorkersIndexWrapper } from './utils/generate-workers-index-wrap
 
 export interface ModuleOptions {
   /**
-   * The folder containing the worker files
-   * Scans for {ts,js,mjs}
+   * Path to the directory containing worker files, relative to the project root.
    * @default 'server/workers'
    */
   workers: string
+  /**
+   * Glob pattern relative to `workers`.
+   * @default '**/*.{ts,js,mjs}'
+   */
+  workersPattern?: string
 }
 
 export default defineNuxtModule<ModuleOptions>({
@@ -25,6 +29,7 @@ export default defineNuxtModule<ModuleOptions>({
   },
   defaults: {
     workers: 'server/workers',
+    workersPattern: '**/*.{ts,js,mjs}',
   },
   async setup(_options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
@@ -78,7 +83,10 @@ declare module '@nuxt/schema' {
       return {
         name: 'nuxt-processor-emit',
         async buildStart() {
-          const workerFiles = await scanFolder(_options.workers)
+          const workerFiles = await scanFolder({
+            path: _options.workers,
+            pattern: _options.workersPattern,
+          })
           if (workerFiles.length === 0) {
             virtualCode = ''
             return

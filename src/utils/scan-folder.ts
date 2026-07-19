@@ -5,7 +5,13 @@ import { logger } from './logger'
 // Credit for this code to
 // https://github.com/genu/nuxt-concierge/blob/master/src/helplers/scan-folder.ts
 
-export default async (path: string): Promise<string[]> => {
+export interface ScanFolderOptions {
+  /** Path to the workers directory, relative to the project root. */
+  path: string
+  pattern?: string
+}
+
+export default async ({ path, pattern = '**/*.{ts,js,mjs}' }: ScanFolderOptions): Promise<string[]> => {
   const nuxt = useNuxt()
   const { resolve } = createResolver(import.meta.url)
   // https://github.com/genu/nuxt-concierge/issues/8
@@ -13,7 +19,7 @@ export default async (path: string): Promise<string[]> => {
 
   const files: string[] = []
 
-  const updatedFiles = await fg('**/*.{ts,js,mjs}', {
+  const updatedFiles = await fg(pattern, {
     cwd: resolvedPath,
     absolute: true,
     onlyFiles: true,
