@@ -1,5 +1,19 @@
-import type { Job, JobsOptions, QueueOptions, WorkerOptions, Processor, ConnectionOptions } from 'bullmq'
-import { Queue, Worker } from 'bullmq'
+import type {
+  Job,
+  JobsOptions,
+  QueueOptions,
+  QueueBaseOptions,
+  WorkerOptions,
+  Processor,
+  ConnectionOptions,
+  FlowProducer,
+  FlowJob,
+  FlowChildJob,
+  FlowOpts,
+  FlowQueuesOpts,
+  JobNode,
+} from 'bullmq'
+import { Queue, Worker, FlowProducer as FlowProducerClass } from 'bullmq'
 import { consola } from 'consola'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { normalizeRedisConnectionEntry } from './normalize-redis-connection'
@@ -44,6 +58,7 @@ interface WorkersRegistry {
   queues: Array<Queue<any, any, any>>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   workers: Array<Worker<any, any, any>>
+  flowProducers: Array<FlowProducer>
 }
 
 interface ProcessorState {
@@ -66,6 +81,7 @@ function getRegistry(): WorkersRegistry {
     state.registry = {
       queues: [],
       workers: [],
+      flowProducers: [],
     }
   }
   return state.registry
@@ -77,7 +93,7 @@ function clearRegistry(): void {
 
 function collectCloseErrors(
   results: PromiseSettledResult<void>[],
-  kind: 'worker' | 'queue',
+  kind: 'worker' | 'queue' | 'flowProducer',
   errors: Error[],
 ): void {
   for (const result of results) {
@@ -136,6 +152,20 @@ export function useProcessor() {
     return worker
   }
 
+  function createFlowProducer(
+    options?: Omit<QueueBaseOptions, 'connection'>,
+  ): FlowProducer {
+    const flowProducer = new FlowProducerClass({
+      connection: resolveConnection('queue'),
+      ...options,
+    })
+    flowProducer.on('error', (error: Error) => {
+      logger.error('FlowProducer error', error)
+    })
+    getRegistry().flowProducers.push(flowProducer)
+    return flowProducer
+  }
+
   async function stopAll(options?: StopAllOptions): Promise<StopAllResult> {
     const state = getRegistry()
     const force = options?.force ?? false
@@ -151,6 +181,11 @@ export function useProcessor() {
     )
     collectCloseErrors(queueResults, 'queue', errors)
 
+    const flowProducerResults = await Promise.allSettled(
+      state.flowProducers.map(flowProducer => flowProducer.close()),
+    )
+    collectCloseErrors(flowProducerResults, 'flowProducer', errors)
+
     clearRegistry()
 
     return { ok: errors.length === 0, errors }
@@ -159,10 +194,27 @@ export function useProcessor() {
   return {
     createQueue,
     createWorker,
+    createFlowProducer,
     stopAll,
     get queues() { return getRegistry().queues },
     get workers() { return getRegistry().workers },
+    get flowProducers() { return getRegistry().flowProducers },
   }
 }
 
-export type { Queue, Worker, Processor, QueueOptions, WorkerOptions, JobsOptions, Job }
+export type {
+  Queue,
+  Worker,
+  FlowProducer,
+  Processor,
+  QueueOptions,
+  QueueBaseOptions,
+  WorkerOptions,
+  JobsOptions,
+  Job,
+  FlowJob,
+  FlowChildJob,
+  FlowOpts,
+  FlowQueuesOpts,
+  JobNode,
+}

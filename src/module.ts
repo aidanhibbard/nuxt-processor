@@ -68,11 +68,13 @@ import type { RedisOptions } from 'bullmq'
 declare module 'nuxt-processor' {
   export { defineQueue } from '${resolve('./runtime/server/handlers/defineQueue')}'
   export { defineWorker } from '${resolve('./runtime/server/handlers/defineWorker')}'
+  export { defineFlowProducer } from '${resolve('./runtime/server/handlers/defineFlowProducer')}'
 }
 
 declare module '#processor' {
   export { defineQueue } from '${resolve('./runtime/server/handlers/defineQueue')}'
   export { defineWorker } from '${resolve('./runtime/server/handlers/defineWorker')}'
+  export { defineFlowProducer } from '${resolve('./runtime/server/handlers/defineFlowProducer')}'
 }
 
 declare module '#bullmq' {

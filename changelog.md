@@ -2,10 +2,12 @@
 
 ### 🚀 Enhancements
 
+- Add `defineFlowProducer()` helper with shared Redis config, registry shutdown via `stopAll()`, and native BullMQ `add()` / `addBulk()` surface.
 - Add `processor.workersPattern` module option to customize the glob used when scanning the workers directory (default unchanged: `**/*.{ts,js,mjs}`).
 
 ### 📖 Documentation
 
+- Add [Define Flow Producer](/define-flow-producer) guide covering flows, `getChildrenValues()`, `waiting-children`, failed-child options, and cleanup.
 - Replace the Bull Board playground/docs example with Durabull setup guidance.
 
 ## v2.1.0

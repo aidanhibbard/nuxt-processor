@@ -24,6 +24,7 @@ export default defineConfig({
           { text: 'Redis configuration', link: '/redis' },
           { text: 'Define Queue', link: '/define-queue' },
           { text: 'Define Worker', link: '/define-worker' },
+          { text: 'Define Flow Producer', link: '/define-flow-producer' },
           { text: 'Durabull', link: '/durabull' },
         ],
       },
