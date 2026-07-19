@@ -19,8 +19,23 @@ try { process.stderr?.on?.('error', handleStreamError) } catch (err) { console.w
 const modules = [
 ${toImportArray}
 ]
+const logger = consola.create({}).withTag('nuxt-processor')
 for (const loader of modules) {
 await loader()
+}
+const registeredWorkers = Array.isArray(api.workers) ? api.workers : []
+const workerNameCounts = registeredWorkers.reduce((counts, worker) => {
+  if (worker?.name) {
+    counts.set(worker.name, (counts.get(worker.name) ?? 0) + 1)
+  }
+  return counts
+}, new Map())
+const duplicateWorkerNames = [...workerNameCounts.entries()]
+  .filter(([, count]) => count > 1)
+  .map(([name]) => name)
+if (duplicateWorkerNames.length > 0) {
+  logger.error('duplicate worker names found: ' + duplicateWorkerNames.join(', '))
+  process.exit(1)
 }
 // Parse --workers flag (e.g. --workers=basic,hello)
 const workersArg = process.argv.find(a => typeof a === 'string' && a.startsWith('--workers='))
@@ -30,7 +45,6 @@ const selectedWorkers = workersArg
 const workersToRun = selectedWorkers
   ? (Array.isArray(api.workers) ? api.workers.filter(w => w && selectedWorkers.includes(w.name)) : [])
   : (Array.isArray(api.workers) ? api.workers : [])
-const logger = consola.create({}).withTag('nuxt-processor')
 if (selectedWorkers && workersToRun.length === 0) {
   const available = (Array.isArray(api.workers) ? api.workers.map(w => w && w.name).filter(Boolean) : [])
   logger.warn('No workers matched --workers=' + selectedWorkers.join(',') + (available.length ? '. Available: ' + available.join(', ') : '.'))

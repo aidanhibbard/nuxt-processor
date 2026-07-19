@@ -4,6 +4,7 @@ import { buildRedisRuntimeConfig } from './utils/redis-runtime-config'
 import type { Plugin } from 'rollup'
 import { relative } from 'node:path'
 import scanFolder from './utils/scan-folder'
+import { DuplicateWorkerNameError, validateDiscoveredWorkers } from './utils/build-worker-manifest'
 import { generateWorkersEntryContent } from './utils/generate-workers-entry-content'
 import { generateWorkersIndexWrapper } from './utils/generate-workers-index-wrapper'
 
@@ -104,6 +105,22 @@ declare module '@nuxt/schema' {
             virtualCode = ''
             return
           }
+
+          try {
+            await validateDiscoveredWorkers({
+              rootDir: nuxt.options.rootDir,
+              processorOptions: _options,
+              workerFiles,
+            })
+          }
+          catch (error) {
+            if (error instanceof DuplicateWorkerNameError) {
+              this.error(error.message)
+              return
+            }
+            throw error
+          }
+
           virtualCode = generateWorkersEntryContent(workerFiles)
           for (const id of workerFiles) {
             this.addWatchFile(id)

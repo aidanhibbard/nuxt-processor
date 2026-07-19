@@ -2,11 +2,14 @@
 
 ### 🚀 Enhancements
 
+- Add `workers list --json` CLI command for machine-readable worker discovery.
+- Fail builds and workers startup when duplicate worker names are discovered.
 - Add `defineFlowProducer()` helper with shared Redis config, registry shutdown via `stopAll()`, and native BullMQ `add()` / `addBulk()` surface.
 - Add `processor.workersPattern` module option to customize the glob used when scanning the workers directory (default unchanged: `**/*.{ts,js,mjs}`).
 
 ### 📖 Documentation
 
+- Document `workers list --json` and duplicate worker name errors in `docs/api.md`.
 - Add [Define Flow Producer](/define-flow-producer) guide covering flows, `getChildrenValues()`, `waiting-children`, failed-child options, and cleanup.
 - Replace the Bull Board playground/docs example with Durabull setup guidance.
 

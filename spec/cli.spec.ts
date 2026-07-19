@@ -6,6 +6,19 @@ import os from 'node:os'
 // Mock ensure-nuxt-project to avoid loading real Nuxt configs
 vi.mock('../src/utils/ensure-nuxt-project', () => ({ default: vi.fn(async () => {}) }))
 
+vi.mock('@nuxt/kit', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@nuxt/kit')>()
+  return {
+    ...actual,
+    loadNuxtConfig: vi.fn(async () => ({
+      processor: {
+        workers: 'server/workers',
+        workersPattern: '**/*.ts',
+      },
+    })),
+  }
+})
+
 // Mock readline to control user input for prompts
 let promptAnswer = 'n'
 vi.mock('node:readline/promises', () => {
@@ -226,5 +239,71 @@ describe('CLI dev command', () => {
     const spawnArgs = lastSpawnArgs as [string, string[], Record<string, unknown>]
     const nodeArgs = spawnArgs[1]
     expect(nodeArgs).toContain('--workers=basic,hello')
+  })
+})
+
+describe('CLI workers list command', () => {
+  let tmpDir: string
+  let stdoutSpy: ReturnType<typeof vi.spyOn>
+  let exitSpy: { mockRestore: () => void }
+
+  beforeEach(() => {
+    tmpDir = mkdtempSync(join(os.tmpdir(), 'nuxt-processor-cli-workers-'))
+    writeFileSync(join(tmpDir, 'package.json'), JSON.stringify({ name: 'app', version: '0.0.0', scripts: {} }, null, 2))
+    stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+    exitSpy = (vi.spyOn(process as unknown as { exit: (code?: number | null) => never }, 'exit')
+      .mockImplementation(((code?: number | null) => {
+        throw new Error('process.exit(' + (code ?? 0) + ')')
+      }) as unknown as (code?: number | null) => never)) as unknown as { mockRestore: () => void }
+  })
+
+  afterEach(() => {
+    try {
+      rmSync(tmpDir, { recursive: true, force: true })
+    }
+    catch {
+      // ignore cleanup error
+    }
+    stdoutSpy.mockRestore()
+    exitSpy.mockRestore()
+    vi.restoreAllMocks()
+  })
+
+  it('prints JSON manifest with workers list --json', async () => {
+    const workersDir = join(tmpDir, 'server', 'workers')
+    mkdirSync(workersDir, { recursive: true })
+    writeFileSync(join(workersDir, 'basic.ts'), `
+export default defineWorker({ name: 'basic', processor: async () => {} })
+`)
+    writeFileSync(join(workersDir, 'hello.ts'), `
+export default defineWorker({ name: 'hello', processor: async () => {} })
+`)
+
+    const { main } = await importCli()
+    await main({ rawArgs: ['workers', 'list', tmpDir, '--json'] })
+
+    const output = stdoutSpy.mock.calls.map(call => String(call[0])).join('')
+    const manifest = JSON.parse(output) as { workers: Array<{ name: string }>, selectedWorkers: string[] | null }
+    expect(manifest.workers.map(worker => worker.name).sort()).toEqual(['basic', 'hello'])
+    expect(manifest.selectedWorkers).toBeNull()
+  })
+
+  it('filters manifest when --workers is provided', async () => {
+    const workersDir = join(tmpDir, 'server', 'workers')
+    mkdirSync(workersDir, { recursive: true })
+    writeFileSync(join(workersDir, 'basic.ts'), `
+export default defineWorker({ name: 'basic', processor: async () => {} })
+`)
+    writeFileSync(join(workersDir, 'hello.ts'), `
+export default defineWorker({ name: 'hello', processor: async () => {} })
+`)
+
+    const { main } = await importCli()
+    await main({ rawArgs: ['workers', 'list', tmpDir, '--json', '--workers', 'hello'] })
+
+    const output = stdoutSpy.mock.calls.map(call => String(call[0])).join('')
+    const manifest = JSON.parse(output) as { workers: Array<{ name: string }>, selectedWorkers: string[] | null }
+    expect(manifest.selectedWorkers).toEqual(['hello'])
+    expect(manifest.workers.map(worker => worker.name)).toEqual(['hello'])
   })
 })

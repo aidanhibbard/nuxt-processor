@@ -69,4 +69,13 @@ describe('generate-workers-entry-content', () => {
     expect(content).toContain('Available:')
     expect(content).toContain('process.exit(1)')
   })
+
+  it('generates entry that exits when duplicate worker names are registered', () => {
+    const content = generateWorkersEntryContent(
+      ['/path/to/worker.mjs'],
+    )
+    expect(content).toContain('duplicate worker names found')
+    expect(content).toContain('duplicateWorkerNames.length > 0')
+    expect(content).toContain('process.exit(1)')
+  })
 })

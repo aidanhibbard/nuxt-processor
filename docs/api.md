@@ -348,11 +348,19 @@ Build output includes `.output/server/workers/index.mjs`, which loads `server/wo
 ```bash
 npx nuxt-processor dev
 npx nuxt-processor dev --workers=basic,hello
+npx nuxt-processor workers list
+npx nuxt-processor workers list --json
+npx nuxt-processor workers list --json --workers=hello
 ```
 
-| Argument | Description |
+| Command / argument | Description |
 | --- | --- |
-| `--workers=name1,name2` | Run only workers with matching queue names (default: all) |
+| `dev` | Run workers with HMR from `.nuxt/dev/workers/index.mjs` |
+| `workers list` | List workers discovered from source files (no Nuxt dev server required) |
+| `workers list --json` | Output the worker manifest as JSON |
+| `--workers=name1,name2` | On `dev`, run only matching workers. On `workers list`, filter the manifest and set `selectedWorkers` |
+
+Duplicate worker names fail the Nitro build and workers process startup.
 
 Equivalent direct invocation:
 
@@ -360,6 +368,40 @@ Equivalent direct invocation:
 node .output/server/workers/index.mjs
 node .output/server/workers/index.mjs --workers=basic,hello
 ```
+
+### Worker manifest
+
+`workers list --json` prints a manifest with this shape:
+
+```json
+{
+  "version": "2.1.0",
+  "workersPath": "server/workers",
+  "workersPattern": "**/*.{ts,js,mjs}",
+  "shutdown": { "timeoutMs": 25000 },
+  "selectedWorkers": null,
+  "workers": [
+    {
+      "name": "basic",
+      "source": "server/workers/basic.ts",
+      "options": {
+        "concurrency": 2,
+        "limiter": { "max": 10, "duration": 1000 }
+      },
+      "effective": {
+        "concurrency": 2,
+        "autorun": false,
+        "lockDuration": 30000,
+        "stalledInterval": 30000,
+        "maxStalledCount": 1,
+        "limiter": { "max": 10, "duration": 1000 }
+      }
+    }
+  ]
+}
+```
+
+`shutdown` is omitted when `processor.shutdown.timeoutMs` is not set. `effective` merges user `options` with nuxt-processor overrides (`autorun: false`) and BullMQ defaults. `selectedWorkers` is `null` unless `--workers=` is passed to `workers list`.
 
 ### `createWorkersApp`
 
