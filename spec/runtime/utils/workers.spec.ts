@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-import { useProcessor, type Processor } from '../../../src/runtime/server/utils/workers'
+import { useProcessor, type Processor, type QueueBaseOptions } from '../../../src/runtime/server/utils/workers'
 
 const useRuntimeConfig = vi.fn()
 
@@ -50,7 +50,19 @@ vi.mock('bullmq', () => {
     close = vi.fn().mockResolvedValue(undefined)
   }
 
-  return { Queue: MockQueue, Worker: MockWorker }
+  class MockFlowProducer {
+    opts: QueueBaseOptions
+    constructor(opts: QueueBaseOptions) {
+      this.opts = opts
+    }
+
+    add = vi.fn().mockResolvedValue(undefined)
+    addBulk = vi.fn().mockResolvedValue(undefined)
+    on = vi.fn()
+    close = vi.fn().mockResolvedValue(undefined)
+  }
+
+  return { Queue: MockQueue, Worker: MockWorker, FlowProducer: MockFlowProducer }
 })
 
 describe('useProcessor registry', () => {
@@ -443,5 +455,48 @@ describe('useProcessor registry', () => {
     await api.stopAll({ force: true })
 
     expect(worker.close).toHaveBeenCalledWith(true)
+  })
+
+  it('creates flow producers from runtimeConfig with queue connection settings', async () => {
+    const api = useProcessor()
+
+    const flowProducer = api.createFlowProducer({ prefix: 'custom' })
+
+    expect(flowProducer.opts.connection).toEqual(expect.objectContaining({
+      host: '127.0.0.1',
+      port: 6379,
+      enableOfflineQueue: false,
+    }))
+    expect(flowProducer.opts.prefix).toBe('custom')
+    expect(api.flowProducers).toContain(flowProducer)
+
+    await api.stopAll()
+    expect(flowProducer.close).toHaveBeenCalled()
+  })
+
+  it('attaches flow producer error handler on createFlowProducer', async () => {
+    const api = useProcessor()
+    const flowProducer = api.createFlowProducer()
+
+    expect(flowProducer.on).toHaveBeenCalledWith('error', expect.any(Function))
+
+    await api.stopAll()
+  })
+
+  it('stopAll closes flow producers after queues', async () => {
+    const api = useProcessor()
+    const queue = api.createQueue('flow-q')
+    const flowProducer = api.createFlowProducer()
+    const closeOrder: string[] = []
+    vi.mocked(queue.close).mockImplementation(async () => {
+      closeOrder.push('queue')
+    })
+    vi.mocked(flowProducer.close).mockImplementation(async () => {
+      closeOrder.push('flowProducer')
+    })
+
+    await api.stopAll()
+
+    expect(closeOrder).toEqual(['queue', 'flowProducer'])
   })
 })

@@ -10,12 +10,12 @@ Reference for module options, runtime config, helpers, and the CLI. Each section
 
 | Alias | Exports |
 | --- | --- |
-| `#processor` | `defineQueue`, `defineWorker` |
-| `#processor-utils` | `useProcessor`, BullMQ types (`Queue`, `Worker`, `Processor`, …) |
+| `#processor` | `defineQueue`, `defineWorker`, `defineFlowProducer` |
+| `#processor-utils` | `useProcessor`, BullMQ types (`Queue`, `Worker`, `FlowProducer`, `Processor`, …) |
 | `#bullmq` | Re-exports from `bullmq` (override via `nuxt.config` alias if needed) |
 
 ```ts
-import { defineQueue, defineWorker } from '#processor'
+import { defineQueue, defineWorker, defineFlowProducer } from '#processor'
 import type { Job } from '#bullmq'
 ```
 
@@ -210,16 +210,66 @@ function defineWorker<
 
 ---
 
+## `defineFlowProducer`
+
+Registers a BullMQ `FlowProducer` for parent/child job trees. `connection` is set from runtime config; other `options` are passed to BullMQ. See the [Define Flow Producer guide](/define-flow-producer) for flow semantics (`getChildrenValues`, `waiting-children`, failed-child options, cleanup).
+
+### Example
+
+```ts
+import { defineFlowProducer } from '#processor'
+
+export default defineFlowProducer({
+  options: {
+    prefix: 'bull',
+  },
+})
+```
+
+### Usage
+
+```ts
+import flowProducer from '~/server/flows/panel'
+
+await flowProducer.add({
+  name: 'questionnaire-run',
+  queueName: 'questionnaire-run',
+  data: { flowId: 'abc' },
+  children: [
+    {
+      name: 'panel-response-shard',
+      queueName: 'panel-response-shard',
+      data: { shardIndex: 0 },
+      opts: { jobId: 'shard-0' },
+    },
+  ],
+})
+```
+
+### Signature
+
+```ts
+type DefineFlowProducerArgs = {
+  options?: Omit<QueueBaseOptions, 'connection'>
+}
+
+function defineFlowProducer(args?: DefineFlowProducerArgs): FlowProducer
+```
+
+`FlowProducer.add()` and `FlowProducer.addBulk()` use BullMQ's native `FlowJob` types. Type job data per queue with `defineQueue` / `defineWorker` generics on each `queueName` in the tree.
+
+---
+
 ## `useProcessor`
 
-Low-level registry used by `defineQueue` / `defineWorker` and the generated workers bundle. Prefer the helpers unless you need programmatic control.
+Low-level registry used by `defineQueue` / `defineWorker` / `defineFlowProducer` and the generated workers bundle. Prefer the helpers unless you need programmatic control.
 
 ### Example
 
 ```ts
 import { useProcessor } from '#processor-utils'
 
-const { createQueue, createWorker, stopAll } = useProcessor()
+const { createQueue, createWorker, createFlowProducer, stopAll } = useProcessor()
 
 const queue = createQueue('emails')
 const worker = createWorker('emails', async job => {
@@ -259,10 +309,15 @@ function useProcessor(): {
     options?: Omit<WorkerOptions, 'connection'>,
   ): Worker<DataType, ResultType, NameType>
 
+  createFlowProducer(
+    options?: Omit<QueueBaseOptions, 'connection'>,
+  ): FlowProducer
+
   stopAll(options?: StopAllOptions): Promise<StopAllResult>
 
   readonly queues: Queue[]
   readonly workers: Worker[]
+  readonly flowProducers: FlowProducer[]
 }
 
 interface StopAllOptions {
@@ -276,9 +331,9 @@ interface StopAllResult {
 }
 ```
 
-Queues created via `createQueue` use `enableOfflineQueue: false` on the Redis connection so producers fail fast when Redis is unavailable ([BullMQ failing fast pattern](https://docs.bullmq.io/patterns/failing-fast-when-redis-is-down)). Queue and worker `error` events are logged with the `nuxt-processor` tag.
+Queues and flow producers created via `createQueue` / `createFlowProducer` use `enableOfflineQueue: false` on the Redis connection so producers fail fast when Redis is unavailable ([BullMQ failing fast pattern](https://docs.bullmq.io/patterns/failing-fast-when-redis-is-down)). Queue, worker, and flow producer `error` events are logged with the `nuxt-processor` tag.
 
-The module registers a Nitro plugin that calls `stopAll()` on server `close`, so queues opened in the Nuxt app process are closed on shutdown.
+The module registers a Nitro plugin that calls `stopAll()` on server `close`, so queues and flow producers opened in the Nuxt app process are closed on shutdown.
 
 Workers created via `createWorker` use `autorun: false`. The generated workers entry calls `.run()` on each worker. Worker shutdown uses a 25s graceful timeout by default (override with `processor.shutdown.timeoutMs`), then `stopAll({ force: true })` if needed.
 
@@ -323,6 +378,6 @@ function createWorkersApp(): Promise<{
 
 From `#processor-utils` / `#bullmq`:
 
-`Queue`, `Worker`, `Processor`, `QueueOptions`, `WorkerOptions`, `JobsOptions`, `Job`
+`Queue`, `Worker`, `FlowProducer`, `Processor`, `QueueOptions`, `QueueBaseOptions`, `WorkerOptions`, `JobsOptions`, `Job`, `FlowJob`, `FlowChildJob`, `FlowOpts`, `FlowQueuesOpts`, `JobNode`
 
 See [BullMQ documentation](https://docs.bullmq.io/) for queue/worker option details.
