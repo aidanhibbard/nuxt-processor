@@ -47,11 +47,42 @@ describe('scan-folder', () => {
     // ignored extension
     writeFileSync(join(absDir, 'ignored.txt'), 'ignore')
 
-    const files = await scanFolder(dir)
+    const files = await scanFolder({ path: dir })
     expect(files.sort()).toEqual([
       join(absDir, 'a.ts'),
       join(absDir, 'b.js'),
       join(absDir, 'nested', 'c.mjs'),
     ].sort())
+  })
+
+  it('uses a custom pattern to limit extensions', async () => {
+    const dir = join('some', 'workers')
+    const absDir = join(tmpDir, dir)
+    mkdirSync(absDir, { recursive: true })
+    writeFileSync(join(absDir, 'a.ts'), 'export {}')
+    writeFileSync(join(absDir, 'b.js'), 'module.exports = {}')
+
+    const files = await scanFolder({ path: dir, pattern: '**/*.ts' })
+    expect(files).toEqual([join(absDir, 'a.ts')])
+  })
+
+  it('supports extglob patterns to exclude spec files', async () => {
+    const dir = join('some', 'workers')
+    const absDir = join(tmpDir, dir)
+    mkdirSync(absDir, { recursive: true })
+    writeFileSync(join(absDir, 'worker.ts'), 'export {}')
+    writeFileSync(join(absDir, 'worker.spec.ts'), 'export {}')
+
+    const files = await scanFolder({ path: dir, pattern: '**/!(*.spec).ts' })
+    expect(files).toEqual([join(absDir, 'worker.ts')])
+  })
+
+  it('warns and returns an empty array when no files match', async () => {
+    const dir = join('empty', 'workers')
+    const absDir = join(tmpDir, dir)
+    mkdirSync(absDir, { recursive: true })
+
+    const files = await scanFolder({ path: dir })
+    expect(files).toEqual([])
   })
 })

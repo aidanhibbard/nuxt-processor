@@ -32,13 +32,32 @@ export default defineNuxtConfig({
 })
 ```
 
+Exclude co-located test files with a custom pattern ([micromatch extglob](https://github.com/micromatch/micromatch#extglob)):
+
+```ts
+export default defineNuxtConfig({
+  modules: ['nuxt-processor'],
+  processor: {
+    workers: 'server/workers',
+    workersPattern: '**/!(*.test|*.spec).{ts,js,mjs}',
+  },
+})
+```
+
+`workers` is the path to the workers directory (resolved from the project root). Globs belong in `workersPattern`, which is relative to that directory.
+
 ```ts
 interface ModuleOptions {
   /**
-   * Folder scanned for worker files ({ts,js,mjs}).
+   * Path to the workers directory, relative to the project root.
    * @default 'server/workers'
    */
   workers: string
+  /**
+   * Glob pattern relative to `workers`.
+   * @default '**/*.{ts,js,mjs}'
+   */
+  workersPattern?: string
 }
 ```
 
