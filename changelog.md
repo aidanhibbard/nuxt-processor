@@ -1,4 +1,4 @@
-## Unreleased
+## v2.2.0
 
 ### 🚀 Enhancements
 
@@ -6,6 +6,7 @@
 - Fail builds and workers startup when duplicate worker names are discovered.
 - Add `defineFlowProducer()` helper with shared Redis config, registry shutdown via `stopAll()`, and native BullMQ `add()` / `addBulk()` surface.
 - Add `processor.workersPattern` module option to customize the glob used when scanning the workers directory (default unchanged: `**/*.{ts,js,mjs}`).
+- Add `processor.shutdown.timeoutMs` module option to override the workers process graceful shutdown timeout (default 25s).
 
 ### 📖 Documentation
 
