@@ -32,7 +32,7 @@ Also using Nuxt Processor? Open an issue to get your businesses logo added below
 
 <div>
   <a href="https://getminds.ai/" target="_blank" rel="noreferrer">
-    <img src="https://getminds.ai/favicon.ico" alt="Minds AI" height="72" />
+    <img src="https://getminds.ai/favicon.ico" alt="Minds" height="72" />
   </a>
 </div>
 
