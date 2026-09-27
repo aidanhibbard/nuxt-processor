@@ -163,6 +163,14 @@ Still configured with `processor.workers` (default `server/workers`). Unchanged.
 
 ---
 
+## Deprecated types (2.x)
+
+### `FlowChildJob`
+
+BullMQ 6 replaced `FlowChildJob` with `FlowJobNode`. nuxt-processor 2.x still exports `FlowChildJob` from `#processor-utils` as a deprecated alias of `FlowJobNode`. Prefer `FlowJobNode` from `#bullmq`. The alias will be removed in the next major release.
+
+---
+
 ## Further reading
 
 - [Redis configuration](/redis)

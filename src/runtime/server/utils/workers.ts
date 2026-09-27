@@ -9,6 +9,7 @@ import type {
   FlowProducer,
   FlowProducerOptions,
   FlowJob,
+  FlowJobNode,
   FlowOpts,
   FlowQueuesOpts,
   JobNode,
@@ -213,8 +214,12 @@ export type {
   JobsOptions,
   Job,
   FlowJob,
+  FlowJobNode,
   FlowProducerOptions,
   FlowOpts,
   FlowQueuesOpts,
   JobNode,
 }
+
+/** @deprecated Use `FlowJobNode` from `#bullmq`. Removed in the next major release. */
+export type FlowChildJob = FlowJobNode
