@@ -250,7 +250,7 @@ await flowProducer.add({
 
 ```ts
 type DefineFlowProducerArgs = {
-  options?: Omit<QueueBaseOptions, 'connection'>
+  options?: Omit<FlowProducerOptions, 'connection'>
 }
 
 function defineFlowProducer(args?: DefineFlowProducerArgs): FlowProducer
@@ -310,7 +310,7 @@ function useProcessor(): {
   ): Worker<DataType, ResultType, NameType>
 
   createFlowProducer(
-    options?: Omit<QueueBaseOptions, 'connection'>,
+    options?: Omit<FlowProducerOptions, 'connection'>,
   ): FlowProducer
 
   stopAll(options?: StopAllOptions): Promise<StopAllResult>
@@ -420,6 +420,6 @@ function createWorkersApp(): Promise<{
 
 From `#processor-utils` / `#bullmq`:
 
-`Queue`, `Worker`, `FlowProducer`, `Processor`, `QueueOptions`, `QueueBaseOptions`, `WorkerOptions`, `JobsOptions`, `Job`, `FlowJob`, `FlowChildJob`, `FlowOpts`, `FlowQueuesOpts`, `JobNode`
+`Queue`, `Worker`, `FlowProducer`, `Processor`, `QueueOptions`, `QueueBaseOptions`, `WorkerOptions`, `JobsOptions`, `Job`, `FlowJob`, `FlowProducerOptions`, `FlowOpts`, `FlowQueuesOpts`, `JobNode`
 
 See [BullMQ documentation](https://docs.bullmq.io/) for queue/worker option details.

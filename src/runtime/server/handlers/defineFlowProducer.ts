@@ -1,8 +1,8 @@
-import type { FlowProducer, QueueBaseOptions } from '../utils/workers'
+import type { FlowProducer, FlowProducerOptions } from '../utils/workers'
 import { useProcessor } from '../utils/workers'
 
 type DefineFlowProducerArgs = {
-  options?: Omit<QueueBaseOptions, 'connection'>
+  options?: Omit<FlowProducerOptions, 'connection'>
 }
 
 export function defineFlowProducer(args: DefineFlowProducerArgs = {}): FlowProducer {

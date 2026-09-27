@@ -3,7 +3,7 @@
   "exclude": [
     "dist",
     "node_modules",
-    "playground",
+    "playground"
   ],
   "compilerOptions": {
     "strict": true

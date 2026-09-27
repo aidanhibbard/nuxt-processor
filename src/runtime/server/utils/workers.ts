@@ -7,8 +7,8 @@ import type {
   Processor,
   ConnectionOptions,
   FlowProducer,
+  FlowProducerOptions,
   FlowJob,
-  FlowChildJob,
   FlowOpts,
   FlowQueuesOpts,
   JobNode,
@@ -153,7 +153,7 @@ export function useProcessor() {
   }
 
   function createFlowProducer(
-    options?: Omit<QueueBaseOptions, 'connection'>,
+    options?: Omit<FlowProducerOptions, 'connection'>,
   ): FlowProducer {
     const flowProducer = new FlowProducerClass({
       connection: resolveConnection('queue'),
@@ -213,7 +213,7 @@ export type {
   JobsOptions,
   Job,
   FlowJob,
-  FlowChildJob,
+  FlowProducerOptions,
   FlowOpts,
   FlowQueuesOpts,
   JobNode,
