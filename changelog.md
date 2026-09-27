@@ -1,3 +1,24 @@
+## v2.3.0
+
+[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v2.2.0...v2.3.0)
+
+### 🩹 Fixes
+
+- Keep flowchildjob as deprecated alias ([44594d2](https://github.com/aidanhibbard/nuxt-processor/commit/44594d2))
+
+### 📖 Documentation
+
+- Use current Minds brand name ([eb8758d](https://github.com/aidanhibbard/nuxt-processor/commit/eb8758d))
+
+### 🏡 Chore
+
+- Bump deps and fix vitest audit findings ([15be0a7](https://github.com/aidanhibbard/nuxt-processor/commit/15be0a7))
+
+### ❤️ Contributors
+
+- Aidan Hibbard ([@aidanhibbard](https://github.com/aidanhibbard))
+- Lexdoudkin <alexander@art-of-x.com>
+
 ## v2.2.0
 
 ### 🚀 Enhancements
