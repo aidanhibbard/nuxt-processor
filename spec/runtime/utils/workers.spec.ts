@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-import { useProcessor, type Processor, type QueueBaseOptions } from '../../../src/runtime/server/utils/workers'
+import { useProcessor, type Processor, type FlowProducerOptions } from '../../../src/runtime/server/utils/workers'
 
 const useRuntimeConfig = vi.fn()
 
@@ -51,8 +51,8 @@ vi.mock('bullmq', () => {
   }
 
   class MockFlowProducer {
-    opts: QueueBaseOptions
-    constructor(opts: QueueBaseOptions) {
+    opts: FlowProducerOptions
+    constructor(opts: FlowProducerOptions) {
       this.opts = opts
     }
 

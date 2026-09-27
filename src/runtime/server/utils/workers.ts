@@ -7,8 +7,9 @@ import type {
   Processor,
   ConnectionOptions,
   FlowProducer,
+  FlowProducerOptions,
   FlowJob,
-  FlowChildJob,
+  FlowJobNode,
   FlowOpts,
   FlowQueuesOpts,
   JobNode,
@@ -153,7 +154,7 @@ export function useProcessor() {
   }
 
   function createFlowProducer(
-    options?: Omit<QueueBaseOptions, 'connection'>,
+    options?: Omit<FlowProducerOptions, 'connection'>,
   ): FlowProducer {
     const flowProducer = new FlowProducerClass({
       connection: resolveConnection('queue'),
@@ -213,8 +214,12 @@ export type {
   JobsOptions,
   Job,
   FlowJob,
-  FlowChildJob,
+  FlowJobNode,
+  FlowProducerOptions,
   FlowOpts,
   FlowQueuesOpts,
   JobNode,
 }
+
+/** @deprecated Use `FlowJobNode` from `#bullmq`. Removed in the next major release. */
+export type FlowChildJob = FlowJobNode

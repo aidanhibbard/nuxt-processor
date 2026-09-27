@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 import { defineFlowProducer } from '../../../src/runtime/server/handlers/defineFlowProducer'
-import { useProcessor, type QueueBaseOptions } from '../../../src/runtime/server/utils/workers'
+import { useProcessor, type FlowProducerOptions } from '../../../src/runtime/server/utils/workers'
 
 const useRuntimeConfig = vi.fn()
 
@@ -21,8 +21,8 @@ vi.mock('nitropack/runtime', () => ({
 
 vi.mock('bullmq', () => {
   class MockFlowProducer {
-    opts: QueueBaseOptions
-    constructor(opts: QueueBaseOptions) {
+    opts: FlowProducerOptions
+    constructor(opts: FlowProducerOptions) {
       this.opts = opts
     }
 
