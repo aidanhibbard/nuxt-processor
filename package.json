@@ -77,7 +77,7 @@
     "tsx": "^4.23.15",
     "typescript": "~5.9.2",
     "unbuild": "^3.6.1",
-    "vitepress": "^2.0.0-alpha.20",
+    "vitepress": "2.0.0-alpha.17",
     "vitest": "^5.0.2",
     "vue-tsc": "^3.3.11"
   },
