@@ -11,7 +11,7 @@ Reference for module options, runtime config, helpers, and the CLI. Each section
 | Alias | Exports |
 | --- | --- |
 | `#processor` | `defineQueue`, `defineWorker`, `defineFlowProducer` |
-| `#processor-utils` | `useProcessor`, BullMQ types (`Queue`, `Worker`, `FlowProducer`, `Processor`, …) |
+| `#processor-utils` | `useProcessor`, `isWorkersProcess`, BullMQ types (`Queue`, `Worker`, `FlowProducer`, `Processor`, ...) |
 | `#bullmq` | Re-exports from `bullmq` (override via `nuxt.config` alias if needed) |
 
 ```ts
@@ -413,6 +413,16 @@ function createWorkersApp(): Promise<{
   stop(options?: StopAllOptions): Promise<StopAllResult>
 }>
 ```
+
+### isWorkersProcess
+
+Returns `true` when `NUXT_PROCESSOR_WORKER` is `'1'`. The generated workers entry sets it before Nitro loads, and child processes inherit it.
+
+```ts
+function isWorkersProcess(): boolean
+```
+
+See [Nitro plugins in the workers process](/define-worker#nitro-plugins-in-the-workers-process) for usage.
 
 ---
 

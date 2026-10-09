@@ -1,9 +1,12 @@
 import { defineNitroPlugin } from 'nitropack/runtime'
+import { isWorkersProcess } from '#processor-utils'
 
 import basicQueue from '../queues/basic'
 import helloQueue from '../queues'
 
 export default defineNitroPlugin((nitroApp) => {
+  if (isWorkersProcess()) return
+
   const basicInterval = setInterval(async () => {
     await basicQueue.add('basic', { now: Date.now() })
   }, 10_000)

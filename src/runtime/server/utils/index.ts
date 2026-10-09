@@ -1,4 +1,5 @@
 export { useProcessor } from './workers'
+export { isWorkersProcess } from './is-workers-process'
 export type {
   Queue,
   Worker,
