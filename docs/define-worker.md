@@ -42,7 +42,7 @@ export default defineNitroPlugin((nitroApp) => {
 })
 ```
 
-It is false in the Nuxt server (`nuxi dev` and production) and true in the workers process (`node .../workers/index.mjs` and `nuxt-processor dev`).
+The workers entry (`node .../workers/index.mjs` and `nuxt-processor dev`) sets `NUXT_PROCESSOR_WORKER=1` before Nitro loads, so `isWorkersProcess()` is true there. The Nuxt server (`nuxi dev` and production) returns false as long as that variable is not set in its environment.
 
 Nitro's `close` hook never fires in the workers process. That entry shuts down through `useProcessor().stopAll()`, so plugin cleanup registered on `close` does not run there.
 

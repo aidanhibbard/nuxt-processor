@@ -416,7 +416,7 @@ function createWorkersApp(): Promise<{
 
 ### isWorkersProcess
 
-Returns `true` only in the dedicated workers process.
+Returns `true` when `NUXT_PROCESSOR_WORKER` is `'1'`. The generated workers entry sets it before Nitro loads, and child processes inherit it.
 
 ```ts
 function isWorkersProcess(): boolean
