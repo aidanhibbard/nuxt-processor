@@ -5,8 +5,10 @@ export function generateWorkersIndexWrapper(
   options?: { shutdownTimeoutMs?: number },
 ): string {
   const shutdownTimeoutMs = options?.shutdownTimeoutMs ?? DEFAULT_SHUTDOWN_TIMEOUT_MS
-  return `import { createWorkersApp } from '${entryImportPath}'\n`
-    + `import { consola } from 'consola'\n`
+  // Marker must be set before the entry is imported because the entry loads Nitro plugins.
+  return `import { consola } from 'consola'\n`
+    + `process.env.NUXT_PROCESSOR_WORKER = '1'\n`
+    + `const { createWorkersApp } = await import('${entryImportPath}')\n`
     + `const logger = consola.create({}).withTag('nuxt-processor')\n`
     + `const SHUTDOWN_TIMEOUT_MS = ${shutdownTimeoutMs}\n`
     + `const appPromise = createWorkersApp().catch((err) => { logger.error('failed to start workers', err); process.exit(1) })\n`

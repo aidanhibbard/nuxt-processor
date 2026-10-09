@@ -132,6 +132,8 @@ To run only specific workers in production:
 node .output/server/workers/index.mjs --workers=basic,hello
 ```
 
+The workers process also runs your Nitro server plugins. See [Nitro plugins in the workers process](/define-worker#nitro-plugins-in-the-workers-process) to opt plugins out.
+
 ## Durabull
 
 See the dedicated page: [Durabull](/durabull)

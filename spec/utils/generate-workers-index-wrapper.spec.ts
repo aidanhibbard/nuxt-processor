@@ -18,10 +18,15 @@ describe('generate-workers-index-wrapper', () => {
     expect(content).toContain('const SHUTDOWN_TIMEOUT_MS = 5000')
   })
 
-  it('imports createWorkersApp from the given entry path', () => {
+  it('sets the workers process marker before dynamically importing the entry', () => {
     const content = generateWorkersIndexWrapper('./chunks/_entry.mjs')
 
-    expect(content).toContain('import { createWorkersApp } from \'./chunks/_entry.mjs\'')
+    const markerIndex = content.indexOf('process.env.NUXT_PROCESSOR_WORKER = \'1\'')
+    const importIndex = content.indexOf('await import(')
+    expect(markerIndex).toBeGreaterThan(-1)
+    expect(content).toContain('await import(\'./chunks/_entry.mjs\')')
+    expect(markerIndex).toBeLessThan(importIndex)
+    expect(content).not.toContain('import { createWorkersApp }')
   })
 
   it('registers SIGINT, SIGTERM, and SIGQUIT handlers', () => {
