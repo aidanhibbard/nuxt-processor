@@ -1,3 +1,20 @@
+## v2.3.1
+
+[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v2.3.0...v2.3.1)
+
+### 🩹 Fixes
+
+- Hold vitepress at alpha 17 for vite 7 ([7496aca](https://github.com/aidanhibbard/nuxt-processor/commit/7496aca))
+- Mark workers process before nitro plugins run ([8b38d64](https://github.com/aidanhibbard/nuxt-processor/commit/8b38d64))
+
+### 📖 Documentation
+
+- Describe `isWorkersProcess()` as an env marker check ([c91a87d](https://github.com/aidanhibbard/nuxt-processor/commit/c91a87d))
+
+### ❤️ Contributors
+
+- Aidan Hibbard ([@aidanhibbard](https://github.com/aidanhibbard))
+
 ## v2.3.0
 
 [compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v2.2.0...v2.3.0)
