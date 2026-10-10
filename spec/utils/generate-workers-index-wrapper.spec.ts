@@ -5,17 +5,17 @@ import {
 } from '../../src/utils/generate-workers-index-wrapper'
 
 describe('generate-workers-index-wrapper', () => {
-  it('embeds the default shutdown timeout constant', () => {
+  it('embeds the default shutdown timeout constant with runtime env fallback', () => {
     const content = generateWorkersIndexWrapper('./_entry.mjs')
 
     expect(DEFAULT_SHUTDOWN_TIMEOUT_MS).toBe(25000)
-    expect(content).toContain('const SHUTDOWN_TIMEOUT_MS = 25000')
+    expect(content).toContain('const SHUTDOWN_TIMEOUT_MS = Number(process.env.NUXT_PROCESSOR_SHUTDOWN_TIMEOUT_MS || process.env.PROCESSOR_SHUTDOWN_TIMEOUT_MS) > 0 ? Number(process.env.NUXT_PROCESSOR_SHUTDOWN_TIMEOUT_MS || process.env.PROCESSOR_SHUTDOWN_TIMEOUT_MS) : 25000')
   })
 
   it('allows overriding shutdownTimeoutMs', () => {
     const content = generateWorkersIndexWrapper('./_entry.mjs', { shutdownTimeoutMs: 5000 })
 
-    expect(content).toContain('const SHUTDOWN_TIMEOUT_MS = 5000')
+    expect(content).toContain(': 5000')
   })
 
   it('sets the workers process marker before dynamically importing the entry', () => {

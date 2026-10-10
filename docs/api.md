@@ -59,6 +59,8 @@ export default defineNuxtConfig({
 })
 ```
 
+`shutdown.timeoutMs` can also be overridden at runtime via the `NUXT_PROCESSOR_SHUTDOWN_TIMEOUT_MS` (or `PROCESSOR_SHUTDOWN_TIMEOUT_MS`) environment variable.
+
 `shutdown.timeoutMs` only affects the standalone workers entry (`workers/index.mjs`), not Nitro server shutdown.
 
 ```ts
