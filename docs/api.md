@@ -59,7 +59,7 @@ export default defineNuxtConfig({
 })
 ```
 
-`shutdown.timeoutMs` can also be overridden at runtime via the `NUXT_PROCESSOR_SHUTDOWN_TIMEOUT_MS` (or `PROCESSOR_SHUTDOWN_TIMEOUT_MS`) environment variable.
+`shutdown.timeoutMs` can also be overridden at runtime with `NUXT_PROCESSOR_SHUTDOWN_TIMEOUT_MS` or `PROCESSOR_SHUTDOWN_TIMEOUT_MS`. When both are set, `NUXT_PROCESSOR_SHUTDOWN_TIMEOUT_MS` is used. Accepted values are finite millisecond counts from 1 through 2147483647 (Node's maximum `setTimeout` delay). Any other value, including `Infinity`, is ignored and the build-time timeout is used. Node would otherwise treat an out-of-range delay as 1 ms and force-stop workers immediately.
 
 `shutdown.timeoutMs` only affects the standalone workers entry (`workers/index.mjs`), not Nitro server shutdown.
 
