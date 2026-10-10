@@ -1,3 +1,20 @@
+## v2.3.2
+
+[compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v2.3.1...v2.3.2)
+
+### 🚀 Enhancements
+
+- Support runtime shutdown timeout env overrides ([97ae0a8](https://github.com/aidanhibbard/nuxt-processor/commit/97ae0a8))
+
+### 🩹 Fixes
+
+- Ignore shutdown timeouts outside node timer range ([f80f02d](https://github.com/aidanhibbard/nuxt-processor/commit/f80f02d))
+
+### ❤️ Contributors
+
+- Aidan Hibbard ([@aidanhibbard](https://github.com/aidanhibbard))
+- OpenClaw Bot <openclaw@minds-ai.co>
+
 ## v2.3.1
 
 [compare changes](https://github.com/aidanhibbard/nuxt-processor/compare/v2.3.0...v2.3.1)
